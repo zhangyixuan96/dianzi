@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>圈粉LOOPIN</title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <script src="./js/qrcode.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <div class="download" id="download">
+            <div class="logo"><img src="images/logo-n.png" alt="" /></div>
+            <div class="userMessage">
+                <img :src="headPhoto" alt="">
+                <div class="code">{{language.invite_code}}：{{recommend}}</div>
+            </div>
+			<!--<div class="project-name">{{language.electronic_membership_card}}</div>-->
+			<div class="download-btns">
+				<button class="btn-ios" @click="jumpTo(item.iosUrl)"></button>
+				<button class="btn-android" @click="jumpTo(item.androidUrl)"></button>
+			</div>
+		</div>
+    </div>
+    <script type="text/javascript">
+    	
+        new Vue({
+            mounted(){
+                if(getUrlParam("headPhoto") != null && typeof(getUrlParam("headPhoto")) != "undefined"){
+            		this.headPhoto = getUrlParam("headPhoto");
+                }
+                if(getUrlParam("recommend") != null && typeof(getUrlParam("recommend")) != "undefined"){
+            		this.recommend = getUrlParam("recommend");
+                }
+                if(getUrlParam("merchantId") != null && typeof(getUrlParam("merchantId")) != "undefined"){
+                    this.merchantId = getUrlParam("merchantId");
+                    // alert(this.merchantId);
+                }
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+            	item:{},
+                headPhoto:'',
+                recommend:'',
+                merchantId:''
+            },
+            methods:{  
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/common/getAppDownload.json';
+                    let formData = new FormData();
+                    // formData.append('sessionId',sessionId);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data; 
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

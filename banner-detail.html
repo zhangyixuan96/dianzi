@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="jumpTo('http://www.dzhyk.com')">
+	            <img src="images/head_ic_back.png">
+            </span>
+            <!-- B8-广告详情 -->
+	        <h2>{{language.advertising_details}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="article-detail" v-html="text">
+	    	<!--{{{text}}}-->
+	    	<!--<img src="images/demo.jpg" alt="" />
+	    	Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet. Proin gravida dolor sit amet lacus accumsan et viverra justo commodo. Proin sodales pulvinar tempor. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nam fermentum, nulla luctus pharetra vulputate, felis tellus mollis orci, sed rhoncus sapien nunc eget.-->
+	    </div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                text:"",
+                id:""
+            },
+            methods:{  
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/banner/getBannerView.json';
+                    let formData = new FormData();
+                    formData.append('bannerId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            let text = res.data.data.h5Text;
+                            const regex = new RegExp('<img', 'gi')
+                            vm.text = text.replace(regex, `<img style="max-width: 100%; height: auto"`);
+                            // vm.text =  text;                       
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

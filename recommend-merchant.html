@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="jumpTo('http://www.dzhyk.com')">
+	            <img src="images/head_ic_back.png">
+            </span>
+            <!-- B3-推荐商户（热门商户) 已废除 -->
+	        <h2>{{language.recommended_merchant}}</h2>
+	        <span class="fr" @click="classifyBool = !classifyBool;">
+	        	<img src="images/b3_head_ic_q.png"/>
+	        </span>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="recommend-list" v-for="item in items">
+	    	<div class="tit">{{item.name}}<img src="images/home_ic_jump.png" alt="" @click="jumpTo('classify-recommend.html?id='+item.id+'&countryId='+countryId)" /></div>
+	    	<ul v-if="item.recommendShopList.length != 0">
+	    		<li v-for="i in item.recommendShopList" @click="jumpTo('merchant-index.html?id='+i.id+'&recommend=1')"><img :src="i.logo" alt="" /></li>
+	    	</ul>
+        </div>
+        <!-- 分类弹窗 -->
+	    <div class="pop-classify" v-if="classifyBool">
+	    	<div class="classify-l">
+	    		<ul>
+	    			<li :class="{cur:firstId==item.id}" @click="nav(index,item.id,item.name)" v-for="(item,index) in classifyItems">{{item.name}}</li>
+	    		</ul>
+	    	</div>
+	    	<div class="classify-r">
+	    		<ul>
+	    			<li :class="{cur:secondId == i.id}" v-for="i in secondClassificationDtoList" @click="selSecond(i.id,i.name)">{{i.name}}</li>
+	    		</ul>
+	    	</div>
+	    	<div class="btns">
+	    		<button class="btn" @click="classifyBool = false;">{{language.cancel}}</button>
+	    		<button class="btn" @click="confirm">{{language.confirm}}</button>
+	    	</div>
+	    </div>
+	    <div class="mask" v-if="classifyBool" @click="classifyBool = false;"></div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("countryId") != null && typeof(getUrlParam("countryId")) != "undefined"){
+            		this.countryId = getUrlParam("countryId");
+                }
+//          	this.countryId = 1;//寫死
+            	this.getList();
+            	this.getClassifyList();
+            },
+            el:"#app",
+            data: { language:language,
+                items:[],                
+                countryId:"",
+                classifyBool:false,
+                secondClassificationDtoList:[],
+                firstId:"",
+                secondId:"",
+                classifyItems:[]
+            },
+            methods:{
+            	//確定分類
+            	confirm(){
+            		let vm = this;
+                    const url = baseUrl + '/app/accountHome/getMoreRecommendShop.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+//                  formData.append('areaId',vm.countryId);
+                    formData.append('firstClassificationId',vm.firstId);
+                    formData.append('secondClassificationId',vm.secondId);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	vm.classifyBool = false;
+                            vm.items = res.data.data;
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+            	},
+            	//壹級分類導航
+            	nav(i,id,name){
+            		this.firstId = id;
+            		this.secondClassificationDtoList = this.classifyItems[i].secondClassificationDtoList;
+            	},
+            	//選擇二級分類
+            	selSecond(id,name){
+            		this.secondId = id;
+            	},
+		        //獲取壹級列表
+                getClassifyList(){
+                	let vm = this;
+                    const url = baseUrl + '/app/common/getFirstClassificationDtoList.json';
+                    let formData = new FormData();
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.classifyItems = res.data.data; 
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                },
+                getList(){
+                	let vm = this;
+                    const url = baseUrl + '/app/accountHome/getMoreRecommendShop.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+//                  formData.append('areaId',vm.countryId);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.items = res.data.data;                                  
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

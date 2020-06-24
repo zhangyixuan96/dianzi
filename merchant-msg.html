@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body style="background-color: rgba(249,247,246,1);">
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" onClick="javascript:history.go(-1)">
+	            <img src="images/head_ic_back.png">
+	        </span>
+			<!-- <h2>{{userName}}{{language.merchant}}</h2> -->
+			<!-- C2-1-商户详情（更多信息） -->
+	        <h2>{{item.shopName}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <!-- <div class="info-list" v-if="item.shopType == 1"> -->
+	    <div class="info-list">
+	    	<ul>
+	    		<li>
+	    			<span class="fl">{{language.store_name}}：</span>
+	    			<span class="fr">{{item.shopName}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.category}}：</span>
+	    			<span class="fr">{{item.firstClassificationName}}-{{item.secondClassificationName}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Hashtag：</span>
+	    			<span class="fr">
+	    				<span v-for="i in item.tagList">#{{i}} </span>
+	    			</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.openning_hours}}：</span>
+	    			<span class="fr">{{item.openTime}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.store_area}}：</span>
+	    			<span class="fr">{{item.areaName}}</span>
+				</li>
+				<!-- 店铺地址 -->
+	    		<li>
+	    			<span class="fl">{{language.shop_address}}：</span>
+	    			<span class="fr" @click="goMap(item.shopAddress)">{{item.shopAddress}}</span>
+	    			<!-- <span class="fr"><a  :href="'http://api.map.baidu.com/geocoder?address='+item.shopAddress+'&output=html&src=webapp.baidu.openAPIdemo'">{{item.shopAddress}}</a></span> -->
+	    			<!-- <span class="fr"><a  :href="'http://api.map.baidu.com/geocoder?address='+item.shopAddress+'&output=html&src=webapp.baidu.openAPIdemo'">{{item.shopAddress}}</a></span> -->
+	    			<!-- <span class="fr"><a class="send" :href="'http://api.map.baidu.com/geocoder?address=广州市天河区棠安路自编188号&output=html&src=webapp.baidu.openAPIdemo'">{{item.shopAddress}}</a></span> -->
+	    			<!-- <span class="fr"><a href="http://api.map.baidu.com/marker?location=纬度,经度&title=广州市天河区棠安路自编188号&content=所在位置的简介（可选）&output=html">{{item.shopAddress}}</a></span> -->
+				</li>
+				<!-- 分店地址 -->
+	    		<li>
+	    			<span class="fl">{{language.branch_address}}：</span>
+	    			<span class="fr"><div v-for="i in item.branchShopAddressList" style="text-align: right;" @click="goMap(i)">{{i}} </div></span>
+	    			<!-- <span class="fr"><div v-for="i in item.branchShopAddressList" style="text-align: right;"><a  :href="'http://api.map.baidu.com/geocoder?address='+i+'&output=html&src=webapp.baidu.openAPIdemo'">{{i}}</a> </div></span> -->
+				</li>
+				<!-- 店铺电话 -->
+	    		<li>
+	    			<span class="fl">{{language.shop_fixed_line_telephone}}：</span>
+	    			<span class="fr">{{item.phone}}</span>
+	    		</li>
+				<!-- 分店电话 -->
+				<li>
+	    			<span class="fl">{{language.branch_phone}}：</span>
+	    			<span class="fr"><div v-for="i in item.branchShopPhoneDtoList">+{{i.phonePrev}} {{i.phone}}</div></span>
+				</li>
+				<!-- 店铺手提号码 -->
+	    		<!-- <li>
+	    			<span class="fl">{{language.shop_portable_number}}：</span>
+	    			<span class="fr">{{item.phone}}</span>
+				</li> -->
+	    		<li>
+	    			<span class="fl">{{language.company_email}}：</span>
+	    			<span class="fr">{{item.companyEmail}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.company_website}}：</span>
+	    			<span class="fr">{{item.companyWebsite}}</span>
+				</li>
+				<!-- 营业时间 -->
+	    		<li @click="goSecond('business_hours',item.businessHours)">
+	    			<span class="fl">{{language.business_hours}}：</span>
+					<!-- <span class="fr">{{item.businessHours}}</span> -->
+					<span class="fr haveSecond" ><img src="images/pop_ic_jump2.png"></span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Whatsapp：</span>
+	    			<span class="fr">{{item.whatsapp}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Facebook：</span>
+	    			<span class="fr">{{item.facebook}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Wechat ID：</span>
+	    			<span class="fr">{{item.wechatId}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.wechat_public_number}}：</span>
+	    			<span class="fr">{{item.wechatPublicAddress}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.taobao}}：</span>
+	    			<span class="fr">{{item.aliTaobao}}</span>
+				</li>
+				<!-- 公司简介 -->
+	    		<li  @click="goSecond('company_profile',item.companyIntroduction)">
+	    			<span class="fl">{{language.company_profile}}：</span>
+	    			<!-- <span class="fr">{{item.companyIntroduction}}</span> -->
+	    			<span class="fr haveSecond"><img src="images/pop_ic_jump2.png"></span>
+	    		</li>
+	    	</ul>
+	    </div>
+	    <!-- 废弃 -->
+	    <!-- <div class="info-list" v-if="item.shopType == 2"> -->
+	    <div class="info-list" v-if="false">
+	    	<ul>
+	    		<li>
+	    			<span class="fl">{{language.store_name}}：</span>
+	    			<span class="fr">{{item.shopName}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.category}}：</span>
+	    			<span class="fr">{{item.firstClassificationName}}-{{item.secondClassificationName}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Hashtag：</span>
+	    			<span class="fr">
+	    				<span v-for="i in item.tagList">#{{i}} </span>
+	    			</span>
+	    		</li>	    		
+	    		<li>
+	    			<span class="fl">{{language.website_area}}：</span>
+	    			<span class="fr">{{item.areaName}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.pickup_address}}：</span>
+	    			<span class="fr">{{item.shopAddress}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.pickup_time}}：</span>
+	    			<span class="fr">{{item.deliveryTime}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.website_phone}}：</span>
+	    			<span class="fr">{{item.phone}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.website_fixphone}}：</span>
+	    			<span class="fr">{{item.fixedPhone}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.website_email}}：</span>
+	    			<span class="fr">{{item.companyEmail}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.website_website}}：</span>
+	    			<span class="fr">{{item.companyWebsite}}</span>
+				</li>
+				<!-- 营业时间 -->
+	    		<li  @click="goSecond('business_hours',item.businessHours)">
+	    			<span class="fl">{{language.business_hours}}：</span>
+	    			<!-- <span class="fr">{{item.businessHours}}</span> -->
+	    			<span class="fr haveSecond"><img src="images/pop_ic_jump2.png"></span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Whatsapp：</span>
+	    			<span class="fr">{{item.whatsapp}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Facebook：</span>
+	    			<span class="fr">{{item.facebook}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">Wechat ID：</span>
+	    			<span class="fr">{{item.wechatId}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.wechat_public_number}}：</span>
+	    			<span class="fr">{{item.wechatPublicAddress}}</span>
+	    		</li>
+	    		<li>
+	    			<span class="fl">{{language.taobao}}：</span>
+	    			<span class="fr">{{item.aliTaobao}}</span>
+				</li>
+				<!-- 公司简介 -->
+	    		<li @click="goSecond('company_profile',item.companyIntroduction)">
+	    			<span class="fl">{{language.company_profile}}：</span>
+					<!-- <span class="fr">{{item.companyIntroduction}}</span> -->
+					<span class="fr haveSecond"><img src="images/pop_ic_jump2.png"></span>
+	    		</li>
+	    	</ul>
+		</div>
+		
+	    <div class="btns">
+	    	<button class="btn btn-merchant-index" onClick="javascript:history.go(-1)">{{language.merchant_homepage}}</button>
+	    </div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+            	if(getUrlParam("userName") != null && typeof(getUrlParam("userName")) != "undefined"){
+            		this.userName = getUrlParam("userName");
+                }
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                id:"",
+                userName:""
+            },
+            methods:{  
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/fansCircle/getMoreShopMsg.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('shopId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+				},
+				// 跳转二级页面
+				goSecond(title,content){
+						jumpTo('merchant-msg-second.html?title=' + title+"&content="+content);
+					},
+				// 跳转地图
+				goMap(address){
+						jumpTo('map.html?address=' + address);
+				}
+            }
+        });
+    </script>
+</body>
+</html>

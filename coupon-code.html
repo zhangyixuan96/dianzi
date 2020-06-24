@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    
+    <script src="./js/qrcode.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="goMerchantIndex">
+			<!-- <span class="fl" @click="jumpTo('http:www.dzhyk.com/coupon.html');" v-else> -->
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- 优惠券二维码 -->
+	        <h2>{{language.coupon_qr_code}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="coupon-code-list">
+	    	<ul>
+	    		<li class="item-new clearfix">
+	    			<span class="fl fl-abs"><img :src="getCouponImg(item.img)"/></span>
+	    			<span class="fr">
+		    			<span class="item-name">{{item.name}}</span>
+		    			<span class="item-dec">{{item.useExplain}}</span>
+		    			<span class="item-time">{{language.effective_period}}：{{item.effectTime}} - {{item.invalidTime}}</span>
+	    			</span>
+	    		</li>
+	    	</ul>
+	    </div>
+    	<div class="code-dec">
+    		{{language.coupon_qr_code}}
+    	</div>
+    		<!--<img :src="item.accountCouponQrcodeSn"/>-->
+    	<!-- <div class="code-bottom" id="qrcode" style="width:1.24rem;text-align: center;"> -->
+    	<!-- <div class="code-bottom" id="qrcode"> -->
+    	<!-- <div class="code-bottom2" id="qrcode" style="width: 210px; margin: 15px auto;"> -->
+    	<div class="" id="qrcode" style="width: 210px; margin: 15px auto;">
+    		<!--<canvas></canvas>-->
+    	</div>
+    	<div class="code-num">{{item.accountCouponQrcodeSn}}</div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+				if(getUrlParam("indexId") != null && typeof(getUrlParam("indexId")) != "undefined") {
+					this.indexId = getUrlParam("indexId");
+				}
+            	this.getDetail();
+            },
+            el:"#app",
+            data: {
+				// 商户ID
+				indexId:'',
+				language:language,
+                item:{},
+                id:""
+            },
+            methods:{
+				getCouponImg(coverImg){
+					if(coverImg == "" || coverImg == null){
+						return "./images/default_coupons.png"
+					}
+					return coverImg
+				},
+                qrcode () {
+                	
+//              	QRCode.toCanvas('qrcode', this.item.accountCouponQrcodeSn, function (error) {
+//	                    console.log(error)
+//	              })
+//              	return;
+	                let that = this;
+	                let qrcode = new QRCode('qrcode', {
+	                    width: 200,
+	                    height: 200,        // 高度
+	                    // text:  that.item.accountCouponQrcodeSn,   // 二維碼內容
+	                    text:  that.item.accountCouponQrcodeSn,   // 二維碼內容
+	                    // text:  'http://test.loopinmo.com/html/dzhyk/download.html'+"?merchantId=2",   // 二維碼內容
+	                    // render: 'canvas' ,   // 設置渲染方式（有兩種方式 table和canvas，默認是canvas）
+	                    // background: '#f0f',   // 背景色
+	                    // foreground: '#ff0'    // 前景色
+					})
+					// alert("ok");
+	                // setTimeout(function(){
+					// 	alert("setTimeout");
+					// 	document.getElementById("qrcode").childNodes[0].style.display = "none!important";
+					// 	alert("no error");
+	                // },2000);
+	            },
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/appAccount/getAccountCouponQrcode.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('accountCouponId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;   
+                            vm.qrcode();
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                },
+				goMerchantIndex(){
+					if(this.indexId){
+						jumpTo('merchant-index.html?id=' + this.indexId);
+					}else{
+						jumpTo('http:www.dzhyk.com/coupon.html');
+					}
+				}
+            }
+        });
+    </script>
+</body>
+</html>

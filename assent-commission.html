@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body style=" background-color: rgba(249,247,246,1);">
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" onClick="javascript:history.go(-1)">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- C2-3-同意授权 -->
+	        <h2>{{language.agree_to_authorize}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+    	<div class="assend-people">
+    		<div class="item-avatar">
+    			<img :src="getBgImg(item.headPhoto)" class="icon-avatar"/>
+    			<img :src="getHeadImg(item.sex)" alt="" class="icon-sex" />
+    		</div>
+    		<div class="item-name">{{item.userName}}</div>
+    		<!--<div class="item-tags">
+    			<ul>
+    				<li>唱歌</li>
+    				<li>琴棋书画</li>
+    			</ul>
+    		</div>-->
+    		<div class="item-dec">{{item.personSignature}}</div>
+    		<div class="item-attr clearfix">
+    			<span class="fl">
+    				<img src="images/c2_ic_phone.png"/>{{language.phone}}：(+{{item.phoneAreaCode}}){{item.phone}}
+    			</span>
+    			<span class="fr">
+    				<img src="images/c2_ic_cake.png"/>{{language.birthday}}：{{item.birthday}}
+    			</span>
+    		</div>
+    	</div>
+    	<!-- <div id="">
+    		{{shopName}}{{shopName}}{{shopName}}{{shopName}}
+    	</div> -->
+		<div class="chk-tips">
+			<input type="checkbox" v-model="agreeChk" />{{language.agree_to_the_store_where_the_above_personal_information_is_provided}}{{shopName}}{{language.shop}}
+		</div>
+    	<div class="btns">
+    		<button class="btn" @click="agree">{{language.confirm_authorization_and_open_membership}}</button>
+    		<button class="btn" onClick="javascript:history.go(-1)">{{language.not_authorized}}</button>
+    	</div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+            	if(getUrlParam("shopName") != null && typeof(getUrlParam("shopName")) != "undefined"){
+            		this.shopName = getUrlParam("shopName");
+                }
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                id:"",
+                agreeChk:true,
+                shopName:""
+            },
+            methods:{ 
+            	getBgImg(img){
+            		if(img == "" || img == null){
+            			return "./images/k_pi_4.png";	
+            		}
+            		return img;
+            	},
+            	agree(){
+            		if(!this.agreeChk){
+            			warmHint(language.please_tick_the_consent_to_confirm_the_authorization)
+            			return;
+            		}
+            		let vm = this;
+                    const url = baseUrl + '/app/appAccount/joinMemberByShopId.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('shopId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	warmHint(language.submitted);
+                        	jumpTo("merchant-index.html?id="+vm.id)
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+            	},
+            	//获取头像的性别图片
+            	getHeadImg(sex){
+            		//0-未知 1-男 2-女
+            		if(sex == 1){
+            			return "images/c2_ic_nan.png";
+            		}else if(sex == 2){
+            			return "images/c2_ic_wo.png";
+            		}else{
+            			return "images/c2_instructions.png";
+            		}
+            	},
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/appAccount/getMyMsg.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;                                  
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

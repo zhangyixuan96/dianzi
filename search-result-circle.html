@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+		<script src="./js/global.js"></script>
+		<script src="./js/vue.min.js"></script>
+		<script src="./js/axios.min.js"></script>
+		<link rel="stylesheet" href="./css/styles.css">
+		<style>
+				.showKong{
+					white-space: pre-line;
+				}
+				</style>
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<div class="loadMoudle" @touchstart="touchStart($event)" @touchmove="touchMove($event)" :style="{transform: 'translate3d(0,' + top + 'px, 0)'}">
+
+				<header class="topbar">
+					<!-- <span class="fl" onClick="javascript:history.go(-1)"> -->
+					<span class="fl" @click="goBack">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- B1-2-搜索结果（商户会员圈） -->
+					<h2>"{{name}}"{{language.merchant_pink_circle_search_results}}</h2>
+				</header>
+				<div class="h88"></div>
+				<div class="circle-list">
+					<ul>
+						<li v-for="(item,index) in items" @click="jumpTo('http://www.dzhyk.com/circle-detail.html?id='+item.id)">
+							<!-- @click="jumpTo('http://www.dzhyk.com/circle-detail.html?id=')+item.id" -->
+							<span class="item-t clearfix">
+	    				<img :src="getImg(item.headPhoto)" alt="" class="item-avatar fl" />
+	    				<span class="fl item-msg">
+	    					<span class="item-name">{{item.userName}}</span>
+							<span class="item-time">{{getTime(item.createTimeStr)}}{{language.before}}</span>
+							<span class="item-content showkong" v-html="item.showContent" style="white-space: pre-line;">
+	    						<!-- {{item.content}} -->
+							</span>
+							<div style="color:rgb(227, 165, 98);margin-top: 0.1rem;"  v-if="item.lostWord" @click="showAllWord($event,index)">全文</div>
+							</span>
+							</span>
+							<span class="item-imgs" v-if="item.imgList.length != 0">
+	    				<dl class="clearfix">
+	    					<dd v-for="i in item.imgList"><img :src="i"/></dd>
+	    				</dl>
+	    			</span>
+							<span class="item-operate">
+	    				<dl class="clearfix">
+	    					<dd>
+								<img src="images/search_ic_share.png" v-if="item.likeStatus==0" alt="" />
+								<img src="images/d_ic_live.png" v-else alt="" />
+								{{item.likeNum}}
+	    					</dd>
+	    					<dd>
+	    						<img src="images/search_ic_comments.png" alt="" />{{item.commentNum}}
+	    					</dd>
+	    					<dd>
+	    						<!-- <img src="item.likeStatus == 0?'images/search_ic_live.png':'images/bi_ic_share.png'" alt="" />{{item.likeNum}} -->
+	    						<img src="images/search_ic_live.png" alt="" />{{item.shareNum}}
+	    					</dd>	    					
+	    				</dl>
+	    			</span>
+						</li>
+					</ul>
+
+					<div class="page-status" v-if="noneData">
+						<img src="images/empty_box.png" />{{language.empty_no_no}}
+					</div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			new Vue({
+				mounted() {
+					if(getUrlParam("name") != null && typeof(getUrlParam("name")) != "undefined") {
+						this.name = getUrlParam("name");
+					}
+					// alert("back")
+						this.getList();
+				},
+				el: "#app",
+				data: {
+					language: language,
+					items: [],
+					name: "",
+					//下拉加載
+					noneData: false,
+					pageSize: 20,
+					pageNumber: 1,
+					totalNum: 0,
+					top: 0,
+					startY: 0,
+					pullUpState: 0, // 1:上拉加載更多, 2:加載中……, 3:我是有底線的
+					isLoading: false, // 是否正在加載
+
+				},
+				methods: {
+					goBack(){
+						jumpTo("search.html?back=true");
+					},
+					getImg(img) {
+						if(img == null || img == "") {
+							return "images/k_pi_2@2x.png"
+						}
+						return img;
+					},
+					//下拉加載
+					// touchStart(e) {
+					// 	this.startY = e.targetTouches[0].pageY
+					// },
+					// touchMove(e) {
+					// 	if(e.targetTouches[0].pageY < this.startY) { // 上拉
+					// 		this.judgeScrollBarToTheEnd()
+					// 	}
+					// },
+
+					// // 判斷滾動條是否到底
+					// judgeScrollBarToTheEnd() {
+					// 	let innerHeight = document.querySelector('.loadMoudle').clientHeight
+					// 	// 變量scrollTop是滾動條滾動時，距離頂部的距離
+					// 	let scrollTop = document.documentElement.scrollTop || window.pageYOffset ||
+
+					// 		document.body.scrollTop
+					// 	// 變量scrollHeight是滾動條的總高度
+					// 	let scrollHeight = document.documentElement.clientHeight || document.body.scrollHeight
+					// 	// 滾動條到底部的條件
+					// 	if(scrollTop + scrollHeight >= innerHeight) {
+					// 		if(this.pullUpState !== 3 && !this.isLoading && !this.noneData) {
+					// 			this.pullUpState = 1;
+					// 			this.infiniteLoad();
+					// 			this.pageNumber++;
+					// 			this.getList();
+					// 		}
+					// 	}
+					// },
+					infiniteLoad() {
+						this.pullUpState = 2;
+						this.isLoading = true;
+						setTimeout(() => {
+							this.infiniteLoadDone();
+						}, 800)
+					},
+					infiniteLoadDone() {
+						this.pullUpState = 0;
+						this.isLoading = false
+					},
+
+					getTime(timeStr) {
+						if(timeStr == "") {
+							return "";
+						}
+						let timeInterval = parseInt(new Date().getTime()) - parseInt(new Date(timeStr).getTime());
+						if(parseInt(timeInterval / 1000) < 60) {
+							return "1" + language.minute;
+						} else if(parseInt(timeInterval / 1000 / 60) < 60) {
+							return parseInt(timeInterval / 1000 / 60) + language.minute;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60) < 24) {
+							return parseInt(timeInterval / 1000 / 60 / 60) + language.hour;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24) < 30) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24) + language.days;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30) < 12) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30) + language.month;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30 / 12) >= 1) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30 / 12) + language.year;
+						} else {
+							return timeStr;
+						}
+					},
+					// 显示全文
+					showAllWord(e,c){
+						e.stopPropagation();
+						this.items[c].lostWord = false;
+						this.items[c].showContent = this.items[c].content;
+					},
+					getList() {
+						let vm = this;
+						const url = baseUrl + '/app/accountHome/searchShopFansCircleByUserName.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('userName', vm.name);
+						// formData.append('pageNumber', vm.pageNumber);
+						// formData.append('pageSize', vm.pageSize);
+						formData.append('pageNumber', 1);
+						formData.append('pageSize', 100);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								let data = res.data.data;
+								// let nowData = Object.create(data);
+								// let test;
+								// console.log("nowData1",nowData);
+								data.map((item,index)=>{
+									let content = item.content;
+									console.log("content.length",content.length);
+									if(content.length>140){
+										item.lostWord = true;
+										item.showContent = item.content.slice(0,141);
+									}else{
+										item.showContent = content;
+									}
+
+									// item.content = item.content.replace(/↵/g,"\n");
+								})
+//								if(res.data.data.length == 0 || res.data.data == null) {
+//									warmHint(language.no_data);
+//									return;
+//								}
+								
+								if(vm.pageNumber == 1 && res.data.data.length == 0) {
+									vm.noneData = true;return;
+								} else {
+									vm.noneData = false;
+								}
+
+								// vm.items = vm.items.concat(res.data.data);
+								// vm.items = res.data.data;
+								vm.items = data;
+								// setTimeout(()=>{
+								// 	// alert("in")
+								// 	vm.getList();
+								// },1000)
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					}
+				}
+			});
+		</script>
+	</body>
+
+</html>

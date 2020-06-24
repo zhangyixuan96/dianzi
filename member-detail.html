@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body style=" background-color: rgba(249,247,246,1);">
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="jumpTo('http://www.dzhyk.com/merchant.html')">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- H1-会员详情页面（未加入） -->
+	        <h2>{{item.userName}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+    	<div class="assend-people">
+    		<div class="item-avatar">
+    			<img :src="item.headPhoto" class="icon-avatar"/>
+    			<img :src="getHeadImg(item.sex)" alt="" class="icon-sex" />
+    		</div>
+    		<div class="item-name">{{item.userName}}</div>
+    		<!--<div class="item-tags">
+    			<ul>
+    				<li>唱歌</li>
+    				<li>琴棋書畫</li>
+    			</ul>
+    		</div>-->
+    		<div class="item-dec">{{item.personSignature}}</div>
+    		<div class="item-attr clearfix">
+    			<span class="fl">
+    				<img src="images/c2_ic_phone.png"/>{{language.phone}}：{{item.phone}}
+    			</span>
+    			<span class="fr">
+    				<img src="images/c2_ic_cake.png"/>{{language.birthday}}：{{item.birthday}}
+    			</span>
+    		</div>
+    		<div class="item-msg" v-if="item.integralInvalidType != 0">
+    			<dl>
+    				<dd>
+    					<span class="fl">{{language.date_of_enrollment}}：</span>
+    					<span class="fr">{{item.createTime}}</span>
+    				</dd>
+    				<dd>
+    					<span class="fl">{{language.expired_date}}：</span>
+    					<span class="fr">{{item.invalidTime}}</span>
+    				</dd>
+    				<dd>
+    					<span class="fl">{{language.remaining_points}}：</span>
+    					<span class="fr">{{item.integral}}{{language.minute}}</span>
+    				</dd>
+    			</dl>
+    		</div>
+    	</div>
+    	<div class="inter-clear" v-if="item.integralInvalidType != 0">
+    		<div class="inter-clear-in">
+    		<input type="checkbox" :checked="item.integralInvalidType == 1" name="chk" v-model="integralChk" />{{language.clear_the_points}}</div>	
+    	</div>
+    	<div class="btns">
+    		<button class="btn" @click="sendBool = true;">{{language.issue_a_membership_card}}</button>
+    	</div>   
+    	<div class="popup" v-if="sendBool">
+	    	<div class="pop-con">
+		    	{{language.whether_to_confirm_the_issuance_of_membership_card}}？
+	    	</div>
+	    	<div class="btns">
+	    		<button @click="sendBool = false;">{{language.cancel}}</button>
+	    		<button @click="submit">{{language.confirm}}</button>
+	    	</div>
+	    </div>
+	    <div class="mask" v-if="sendBool"></div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+//          	this.id = 18;//暫時寫死
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                sendBool:false,
+                integralChk:false
+            },
+            methods:{  
+            	submit(){
+                	let vm = this;
+                    const url = baseUrl + '/app/accountShop/giveMemberCardByAccountId.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('accountId',vm.id);
+                    if(this.item.integralInvalidType != 0){
+                    	if(this.integralChk){
+                    		formData.append('integralInvalidType',1);
+                    	}else{
+                    		formData.append('integralInvalidType',2);
+                    	}
+                    }
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	warmHint(language.successfully_issued + "!");
+                        	setTimeout(function(){
+//                      		jumpTo("make-detail.html?id="+res.data.data);
+                        	},2000)
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+            	},
+            	//獲取頭像的性別圖片
+            	getHeadImg(sex){
+            		//0-未知 1-男 2-女
+            		if(sex == 1){
+            			return "images/c2_ic_nan.png";
+            		}else if(sex == 2){
+            			return "images/c2_ic_wo.png";
+            		}else{
+            			return "images/c2_instructions.png";
+            		}
+            	},
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/accountShop/getAccountMemberView.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('accountId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;       
+                            if(vm.item.integralInvalidType == 1){
+                            	vm.integralChk = true;
+                            }else if(vm.item.integralInvalidType == 2){
+                            	vm.integralChk = false;
+                            }
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

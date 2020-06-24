@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+		body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+	</style>
+	<!-- <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=rgw6deeIv0O9nLFyG1GPA6ecf1LmSmxP"></script> -->
+	<script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=rgw6deeIv0O9nLFyG1GPA6ecf1LmSmxP&s=1"></script>
+	<script src="./js/global.js"></script>
+	<script src="./js/vue.min.js"></script>
+	<link rel="stylesheet" href="./css/styles.css">
+	<title>地址解析</title>
+</head>
+<body>
+	<div id="app" v-cloak>
+			<header class="topbar">
+					<span class="fl" onClick="javascript:history.go(-1)">
+						<img src="images/head_ic_back.png">
+					</span>
+					<!-- H3-手动输入 -->
+					<h2 class="mapTitle">{{address}}</h2>
+					<!-- <h2 class="mapTitle">广州市天河区棠安路自编188号广州市天河区棠安路自编188号广州市天河区棠安路自编188号</h2>
+				</header>   -->
+				<div class="h88"></div>
+	</div>
+	<div id="allmap"></div>
+	div.
+</body>
+</html>
+<script type="text/javascript">
+	
+	new Vue({
+            mounted(){
+            	if(getUrlParam("address") != null && typeof(getUrlParam("address")) != "undefined"){
+            		this.address = getUrlParam("address");
+                }
+         		// this.address = "广州市 天河区 棠安路自编188号";//暫時寫死
+				this.getMap();
+				// 重写alert去掉网址
+				window.alert = function(name){
+				var iframe = document.createElement("IFRAME");
+				iframe.style.display="none";
+				iframe.setAttribute("src", 'data:text/plain,');
+				document.documentElement.appendChild(iframe);
+				window.frames[0].window.alert(name);
+				iframe.parentNode.removeChild(iframe);
+				}
+            },
+            el:"#app",
+            data: { 
+				language:language,
+				address:'',
+            },
+            methods:{  
+            	getMap(){
+					// 百度地图API功能
+					var map = new BMap.Map("allmap");
+					var point = new BMap.Point(116.331398,39.897445);
+					map.centerAndZoom(point,12);
+					// map.addControl(new BMap.NavigationControl());
+					map.enableScrollWheelZoom();   //启用滚轮放大缩小，默认禁用
+					map.enableContinuousZoom();    //启用地图惯性拖拽，默认禁用
+					map.addControl(new BMap.NavigationControl());    
+					map.addControl(new BMap.ScaleControl());    
+					map.addControl(new BMap.OverviewMapControl());    
+					// 创建地址解析器实例
+					var myGeo = new BMap.Geocoder();
+					// 将地址解析结果显示在地图上,并调整地图视野
+					myGeo.getPoint(this.address, function(point){
+						// myGeo.getLocation(point, function(result){      
+						// 	if (result){      
+						// 	console.log(result.address);      
+						// 	}      
+						// });
+						// myGeo.getLocation(point, function(rs){
+						// 	var addComp = rs.addressComponents;
+						// 	// alert(addComp.province + ", " + addComp.city + ", " + addComp.district + ", " + addComp.street + ", " + addComp.streetNumber);
+						// 	this.city = addComp.city;
+						// });        
+						if (point) {
+							map.centerAndZoom(point, 16);
+							map.addOverlay(new BMap.Marker(point));
+						}else{
+							alert("地址无效");
+						}
+					});
+            	},
+            	
+            }
+        });
+</script>
+

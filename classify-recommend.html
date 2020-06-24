@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+		<script src="./js/global.js"></script>
+		<script src="./js/vue.min.js"></script>
+		<script src="./js/axios.min.js"></script>
+		<link rel="stylesheet" href="./css/styles.css">
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<div class="loadMoudle" @touchstart="touchStart($event)" @touchmove="touchMove($event)" :style="{transform: 'translate3d(0,' + top + 'px, 0)'}">
+				<header class="topbar">
+					<!-- <span class="fl" onClick="javascript:history.go(-1)"> -->
+				<span class="fl" onClick="jumpTo('http://www.dzhyk.com')">
+					<img src="images/head_ic_back.png">
+				</span>
+				<span class="fr" @click="classifyBool = !classifyBool;">
+					<img src="images/b3_head_ic_q.png"/>
+				</span>
+	        </span>
+					<!-- <h2>{{name}}·{{language.business_recommendation}}</h2> -->
+					<!-- B3-1分类推荐改为商户推荐 -->
+					<h2>{{language.recommended_merchant}}</h2>
+				</header>
+				<div class="h88"></div>
+				<div class="search-merchant-list">
+					<ul>
+						<!-- <li v-for="item in items" @click="jumpTo('merchant-index.html?recommend=1&id='+item.id)"> -->
+						<li v-for="item in items" @click="goBack(item.id)">
+							<!--<img :src="item.logo" alt="" class="item-avatar fl" />
+							<span class="fl item-r">
+			    				<span class="item-t clearfix">
+			    					<span class="item-name fl">{{item.shopName}}<img v-if="item.recommenStatus == 1" src="./images/b_ic_tui.png" /></span>
+							</span>-->
+
+							<!--<span class="item-m">
+			    					<dl class="clearfix">
+			    						<dd v-for="i in item.tagList">{{i}}</dd>
+			    					</dl>
+			    				</span>-->
+
+							<!--<span class="item-b">
+			    					<span class="item-address">地址：{{item.shopAddress}}</span>
+							<span class="item-tel">電話：{{item.phone}}</span>
+							</span>
+
+							<div class="mer-tag" v-if="item.tagList.length != 0" @click.stop="tag(item.tagList)">
+								店鋪特色 >
+							</div>-->
+							<!--<span class="item-tags">
+			    					<dl class="clearfix">-->
+							<!--<dd>{{getType(item.shopType)}}</dd>-->
+							<!--<dd v-if="item.recommenStatus == 1">推</dd>-->
+							<!--<dd v-if="item.recommenStatus == 1"><img src="./images/b1_ic_tui.png"/></dd>-->
+							<!--</dl>
+			    				</span>-->
+							<!--</span>-->
+							<img :src="getImg(item.logo)" alt="" class="item-avatar fl" />
+							<span class="fl item-r">
+			    				<span class="item-t clearfix">
+			    					<img v-if="item.recommenStatus == 1" src="./images/b_ic_tui.png" class="icon-tui" />
+			    					<span class="item-name fl">{{item.shopName}}</span>
+								<!--<span class="item-type fr">{{item.firstClassificationName}}>{{item.secondClassificationName}}</span>-->
+								</span>
+								<!--<span class="item-m" v-if="item.tagList.length != 0">
+			    					<dl class="clearfix">
+			    						<dd v-for="i in item.tagList">{{i}}</dd>
+			    					</dl>
+			    				</span>-->
+								<span class="item-b">
+		    					<span class="item-address">{{item.firstClassificationName}}>{{item.secondClassificationName}}</span>
+								<span class="item-address">{{language.address}}：{{item.shopAddress}}</span>
+								<span class="item-tel">{{language.shop_fixed_line_telephone}}：{{item.phone}}</span>
+								</span>
+	
+								<div class="mer-tag" v-if="item.tagList.length != 0" @click.stop="tag(item.tagList)">
+									{{language.store_features}}
+								</div>
+							</span>
+						</li>
+					</ul>
+					<div class="page-status" v-if="noneData">
+						<img src="images/empty_box.png" />{{language.empty_no_no}}
+					</div>
+				</div>
+			</div>
+
+			<div class="mask" v-if="tagBool"></div>
+
+			<div class="popup-tag" v-if="tagBool">
+				<div class="popup-tag-in">
+					<div class="popup-tag-in-in">
+						<img src="images/a2_ic_guan.png" class="icon-close" @click="cancle" />
+						<dl class="clearfix">
+							<dd v-for="i in tagItems">{{i}}</dd>
+						</dl>
+					</div>
+				</div>
+			</div>
+			<!-- 分类弹窗 -->
+			<div class="pop-classify" v-if="classifyBool">
+				<div class="classify-l">
+					<ul>
+						<li :class="{cur:firstId==0}" @click="nav(-1,0,'全部')">全部</li>
+						<li :class="{cur:firstId==item.id}" @click="nav(index,item.id,item.name)" v-for="(item,index) in classifyItems">{{item.name}}</li>
+					</ul>
+				</div>
+				<div class="classify-r">
+					<ul>
+						<li :class="{cur:secondId == i.id}" v-for="i in secondClassificationDtoList" @click="selSecond(i.id,i.name)">{{i.name}}</li>
+					</ul>
+				</div>
+				<div class="btns">
+					<button class="btn" @click="classifyBool = false;">{{language.cancel}}</button>
+					<button class="btn" @click="getList('confirm')">{{language.confirm}}</button>
+				</div>
+			</div>
+			<div class="mask" v-if="classifyBool" @click="classifyBool = false;"  @touchmove="mask($event)"></div>
+		</div>
+			<script type="text/javascript">
+				new Vue({
+					mounted() {
+						if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined") {
+							this.id = getUrlParam("id");
+						}
+						if(getUrlParam("countryId") != null && typeof(getUrlParam("countryId")) != "undefined") {
+							this.countryId = getUrlParam("countryId");
+						}
+						if(getUrlParam("name") != null && typeof(getUrlParam("name")) != "undefined") {
+							this.name = getUrlParam("name");
+						}
+						if(getUrlParam("firstId") != null && typeof(getUrlParam("firstId")) != "undefined") {
+						this.firstId = getUrlParam("firstId");
+						}
+						if(getUrlParam("secondId") != null && typeof(getUrlParam("secondId")) != "undefined") {
+							this.secondId = getUrlParam("secondId");
+						}
+						this.getList();
+						this.getClassifyList();
+					},
+					el: "#app",
+					data: {
+						// 二级分类
+						secondClassificationDtoList:[],
+						// 一级ID
+						firstId:0,
+						// 二级ID
+						secondId:0,
+						// 弹窗分类数据
+						classifyItems:[],
+						// 分类选择弹窗是否显示
+						classifyBool:false, 
+						language:language,
+						items: [],
+						id: "",
+						name: "",
+						countryId: "",
+
+						//下拉加載
+						pageSize: 20,
+						noneData: false,
+						pageNumber: 1,
+						totalNum: 0,
+						top: 0,
+						startY: 0,
+						pullUpState: 0, // 1:上拉加載更多, 2:加載中……, 3:我是有底線的
+						isLoading: false, // 是否正在加載
+						tagBool: false,
+						tagItems: []
+					},
+					methods: {
+
+						getImg(img) {
+							if(img == null || img == "") {
+								return "images/k_pi_2@2x.png"
+							}
+							return img;
+						},
+						cancle() {
+							this.classifyBool = false;
+							this.tagBool = false;
+						},
+						tag(tagList) {
+							this.tagBool = true;
+							this.tagItems = tagList;
+						},
+						//下拉加載
+						touchStart(e) {
+							this.startY = e.targetTouches[0].pageY
+						},
+						touchMove(e) {
+							if(e.targetTouches[0].pageY < this.startY) { // 上拉
+								this.judgeScrollBarToTheEnd()
+							}
+						},
+
+						// 判斷滾動條是否到底
+						judgeScrollBarToTheEnd() {
+							let innerHeight = document.querySelector('.loadMoudle').clientHeight
+							// 變量scrollTop是滾動條滾動時，距離頂部的距離
+							let scrollTop = document.documentElement.scrollTop || window.pageYOffset || document.body.scrollTop
+							// 變量scrollHeight是滾動條的總高度
+							let scrollHeight = document.documentElement.clientHeight || document.body.scrollHeight
+							// 滾動條到底部的條件
+							if(scrollTop + scrollHeight >= innerHeight) {
+								if(this.pullUpState !== 3 && !this.isLoading && !this.noneData) {
+									this.pullUpState = 1;
+									this.infiniteLoad();
+									this.pageNumber++;
+									this.getList();
+								}
+							}
+						},
+						infiniteLoad() {
+							this.pullUpState = 2;
+							this.isLoading = true;
+							setTimeout(() => {
+								this.infiniteLoadDone();
+							}, 800)
+						},
+						infiniteLoadDone() {
+							this.pullUpState = 0;
+							this.isLoading = false
+						},
+
+//						getType(type) {
+//							if(type == 1) {
+//								return "實";
+//							} else if(type == 2) {
+//								return "網";
+//							}
+//						},
+						// getList() {
+						// 	let vm = this;
+						// 	const url = baseUrl + '/app/accountHome/getRecommendShopByFirstClassId.json';
+						// 	let formData = new FormData();
+						// 	formData.append('sessionId', sessionId);
+						// 	//                  formData.append('areaId',vm.countryId);                    
+						// 	formData.append('firstClassificationId', vm.id);
+						// 	formData.append('pageNumber', vm.pageNumber);
+						// 	formData.append('pageSize', vm.pageSize);
+						// 	axios.post(url, formData).then(res => {
+						// 		if(!goLogin(res.data, window.location.href)) {
+						// 			return;
+						// 		}
+						// 		if(res.data.code == 2000000) {
+						// 			vm.items = vm.items.concat(res.data.data);
+						// 			if(vm.pageNumber == 1 && res.data.data.length == 0) {
+						// 				vm.noneData = true;
+						// 			} else {
+						// 				vm.noneData = false;
+						// 			}
+						// 			if(res.data.data.length > 0) {
+						// 				vm.name = res.data.data[0].firstClassificationName;
+						// 			}
+						// 		} else {
+						// 			warmHint(res.data.message);
+						// 		}
+						// 	});
+						// }
+						getList(confirm) {
+							let vm = this;
+							// 点击的确认筛选
+							if(confirm){
+								vm.classifyBool = false;
+								vm.pageNumber = 1;
+							}
+							const url = baseUrl + '/app/accountHome/getRecommendShopList.json';
+							let formData = new FormData();
+							formData.append('sessionId', sessionId);
+							// formData.append('areaId',vm.countryId);                    
+							// formData.append('firstClassificationId', vm.id);
+							formData.append('pageNumber', vm.pageNumber);
+							formData.append('firstClassificationId', vm.firstId);
+							formData.append('secondClassificationId', vm.secondId);
+							axios.post(url, formData).then(res => {
+								if(!goLogin(res.data, window.location.href)) {
+									return;
+								}
+								if(res.data.code == 2000000) {
+									// 点击的确认筛选
+									if(confirm){
+										vm.items = [];
+									}
+									vm.items = vm.items.concat(res.data.data);
+									if(vm.pageNumber == 1 && res.data.data.length == 0) {
+										vm.noneData = true;
+									} else {
+										vm.noneData = false;
+									}
+									if(res.data.data.length > 0) {
+										vm.name = res.data.data[0].firstClassificationName;
+									}
+								} else {
+									warmHint(res.data.message);
+								}
+							});
+						},
+						//壹級分類導航
+						nav(i,id,name){
+						this.firstId = id;
+						// id为0为全部
+						if(id==0){
+							this.secondClassificationDtoList = [];
+							this.secondId = 0;
+						}else{
+							this.secondClassificationDtoList = this.classifyItems[i].secondClassificationDtoList;
+						}
+						},
+						//選擇二級分類
+						selSecond(id,name){
+							this.secondId = id;
+						},
+						//獲取壹級列表
+						getClassifyList(){
+							let vm = this;
+							const url = baseUrl + '/app/common/getFirstClassificationDtoList.json';
+							let formData = new FormData();
+							axios.post(url, formData).then(res => {
+								if(!goLogin(res.data,window.location.href)){
+									return;	
+								}
+								if (res.data.code == 2000000) {
+									vm.classifyItems = res.data.data; 
+								} else {
+									warmHint(res.data.message);
+								}
+							});
+						},
+						// 阻止页面滚动
+						mask(e){
+							// console.log("e");
+							e.preventDefault()
+							// e.stopPropagation();
+						},
+						goBack(id){
+							jumpTo('merchant-index.html?recommend=1&id='+id+'&firstId='+this.firstId+"&secondId="+this.secondId);
+						}
+					}
+				});
+			</script>
+	</body>
+
+</html>

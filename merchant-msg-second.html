@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <script src="./js/qrcode.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" onClick="javascript:history.go(-1)">
+	        <!-- <span class="fl" onClick="jumpTo('http:www.dzhyk.com/merchant.html')"> -->
+	            <img src="images/head_ic_back.png">
+            </span>
+            <!-- C2-1-商户详情（更多信息）二级页面 -->
+	        <h2 v-if="type==1">{{language.business_hours}}</h2>
+	        <h2 v-else>{{language.company_profile}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+    	<div class="couponMoreContent">
+            {{content}}
+        </div>
+    </div>
+    <script type="text/javascript">
+    	
+        new Vue({
+            mounted(){
+                // this.getDetail();
+                if(getUrlParam("title") != null && typeof(getUrlParam("title")) != "undefined"){
+                    let title = getUrlParam("title");
+                    if(title =='business_hours'){
+                        this.type=1;
+                    }
+                    if(title =='company_profile'){
+                        this.type=2;
+                    }
+                }
+                if(getUrlParam("content") != null && typeof(getUrlParam("content")) != "undefined"){
+                    this.content = getUrlParam("content");
+                }
+                
+            },
+            el:"#app",
+            data: { 
+                language:language,
+                item:{},
+                qrcodeImg:"",
+                type:1,
+                content:''
+            },
+            methods:{  
+            	getImg(img){
+            		if(img == null || img == ''){
+            			return "images/k_pi_1.png";
+            		}else{
+            			return img;
+            		}
+            	},
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/accountShop/getShopQrcode.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;   
+                            vm.qrcodeImg = vm.item.qrcodeSn;  
+                            vm.qrcode();
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                },
+                qrcode () {
+	                let that = this;
+	                let qrcode = new QRCode('qrcode', {
+	                    width: 124,
+	                    height: 124,        // 高度
+	                    text:  this.qrcodeImg,   // 二維碼內容
+	                    // render: 'canvas' ,   // 設置渲染方式（有兩種方式 table和canvas，默認是canvas）
+	                    // background: '#f0f',   // 背景色
+	                    // foreground: '#ff0'    // 前景色
+	                })
+	                setTimeout(function(){
+	                	document.getElementById("qrcode").childNodes[0].style.display = "none!important"
+	                },500);
+	            }
+            }
+        });
+    </script>
+</body>
+</html>

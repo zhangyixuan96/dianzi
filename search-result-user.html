@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+		<script src="./js/global.js"></script>
+		<script src="./js/vue.min.js"></script>
+		<script src="./js/axios.min.js"></script>
+		<link rel="stylesheet" href="./css/styles.css">
+	</head>
+
+	<body>
+		<div id="app" v-cloak>
+			<div class="loadMoudle" @touchstart="touchStart($event)" @touchmove="touchMove($event)" :style="{transform: 'translate3d(0,' + top + 'px, 0)'}">
+
+				<header class="topbar">
+					<!-- <span class="fl" onClick="javascript:history.go(-1)"> -->
+							<span class="fl" @click="goBack">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- B1-3-搜索结果（用户列表） -->
+					<h2>"{{name}}"用戶搜索結果</h2>
+				</header>
+				<div class="h88"></div>
+
+				<!--用戶結果-->
+				<div class="user-list">
+					<ul>
+						<li class="clearfix" v-for="item in items">
+							<!-- @click="jumpTo('http://www.dzhyk.com/user-detail.html?id='+item.id)"-->
+							<img :src="getImg(item.headPhoto)" alt="" class="item-avatar fl" />
+							<span class="fl item-msg">
+	    				<span class="item-msg-in">
+	    					<span class="item-name">{{item.userName}}</span>
+							<span class="item-content">{{item.personSignature}}</span>
+							</span>
+							</span>
+						</li>
+					</ul>
+
+					<div class="page-status" v-if="noneData">
+						<img src="images/empty_box.png" />空空如也，啥都沒有
+					</div>
+				</div>
+			</div>
+			<script type="text/javascript">
+				new Vue({
+					mounted() {
+						if(getUrlParam("name") != null && typeof(getUrlParam("name")) != "undefined") {
+							this.name = getUrlParam("name");
+						}
+						this.getList();
+					},
+					el: "#app",
+					data: { language:language,
+						items: [],
+						name: "",
+
+						//下拉加載
+					noneData:false,
+						pageSize: 20,
+						pageNumber: 1,
+						totalNum: 0,
+						top: 0,
+						startY: 0,
+						pullUpState: 0, // 1:上拉加載更多, 2:加載中……, 3:我是有底線的
+						isLoading: false, // 是否正在加載
+
+					
+				},
+				methods: {
+				goBack(){
+					jumpTo("search.html?back=true");
+				},	
+				getImg(img){
+					if(img == null || img == ""){
+						return "images/k_pi_2@2x.png"
+					}
+					return img;
+				},
+					//下拉加載
+					touchStart(e) {
+						this.startY = e.targetTouches[0].pageY
+					},
+					touchMove(e) {
+						if(e.targetTouches[0].pageY < this.startY) { // 上拉
+							this.judgeScrollBarToTheEnd()
+						}
+					},
+
+					// 判斷滾動條是否到底
+					judgeScrollBarToTheEnd() {
+						let innerHeight = document.querySelector('.loadMoudle').clientHeight
+						// 變量scrollTop是滾動條滾動時，距離頂部的距離
+						let scrollTop = document.documentElement.scrollTop || window.pageYOffset ||
+
+							document.body.scrollTop
+						// 變量scrollHeight是滾動條的總高度
+						let scrollHeight = document.documentElement.clientHeight || document.body.scrollHeight
+						// 滾動條到底部的條件
+						if(scrollTop + scrollHeight >= innerHeight) {
+							if(this.pullUpState !== 3 && !this.isLoading && !this.noneData) {
+								this.pullUpState = 1;
+								this.infiniteLoad();
+								this.pageNumber++;
+								this.getList();
+							}
+						}
+					},
+					infiniteLoad() {
+						this.pullUpState = 2;
+						this.isLoading = true;
+						setTimeout(() => {
+							this.infiniteLoadDone();
+						}, 800)
+					},
+					infiniteLoadDone() {
+						this.pullUpState = 0;
+						this.isLoading = false
+					},
+					cancle() {},
+					getList() {
+						let vm = this;
+						const url = baseUrl + '/app/accountHome/searchAccountByUserName.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('userName', vm.name);
+						formData.append('pageNumber', vm.pageNumber);
+						formData.append('pageSize', vm.pageSize);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								if(res.data.data.length == 0 || res.data.data == null) {
+									warmHint("暫無數據");
+									return;
+								}
+
+								vm.items = vm.items.concat(res.data.data);
+								if(vm.pageNumber == 1 && res.data.data.length == 0) {
+									vm.noneData = true;
+								} else {
+									vm.noneData = false;
+								}
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					}
+				}
+				});
+			</script>
+	</body>
+
+</html>

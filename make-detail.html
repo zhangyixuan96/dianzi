@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <!--<script src="./js/qrcode.min.js"></script>-->
+    <script src="./js/jquery-2.1.4.js"></script>
+    <script src="./js/JsBarcode.all.min.js"></script>
+    
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="jumpTo('http://www.dzhyk.com/self-card.html')">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- E2-2-自制卡详情 -->
+	        <h2>{{language.physical_card_details}}</h2>
+	        <span class="fr" @click="setPop = true;">
+	        	<img src="images/e2_head_ic_d.png"/>
+	        </span>
+	    </header>  
+	    <div class="h88"></div>
+        <div class="search-mask" v-if="setPop" @click="setPop = false"></div>
+        <div class="make-set" v-if="setPop">
+        	<ul>
+        		<li @click="jumpTo('edit-card.html?id='+id)">{{language.edit}}</li>
+        		<li @click="deletePop = true;">{{language.delete_this_card}}</li>
+        	</ul>
+        </div>
+	    <div class="make-nav">
+	    	<ul>
+	    		<li :class="{cur: type == 1}" @click="nav(1)">{{language.card_front}}</li>
+	    		<li :class="{cur: type == 2}" @click="nav(2)">{{language.reverse_side_of_the_card}}</li>
+	    	</ul>
+	    </div>
+	    <div class="card-detail-banner" :style="getBgImg()">
+	    	<!--<div class="card-grade">白金會員</div>
+	    	<div class="card-grade-eng">PLATINUM MEMBER</div>-->
+	    </div>
+	    <div class="card clearfix">
+		    <span class="fl">{{item.shopName}}</span>
+		   	<span class="fr">{{item.firstClassificationName}}>{{item.secondClassificationName}}</span> 
+	    </div>	    
+	    <div class="card-time" v-if="item.invalidTime">{{language.expire_date}}：{{item.invalidTime}}</div>
+	    <div class="card-time" v-else>{{language.expire_date}}：{{language.indefinite}}</div>
+	    <div class="card-shape-code">
+	    	<canvas id="qrcode">
+	    	</canvas>
+	    	<!--<img src="images/demo.jpg"/>-->
+	    	<!--{{item.cardNumber}}-->
+	    </div>
+	    <div class="popup" v-if="deletePop">
+	    	<div class="pop-con">
+		    	{{language.are_you_sure_to_delete_this_card}}
+	    	</div>
+	    	<div class="btns">
+	    		<button @click="deletePop = false">{{language.cancel}}</button>
+	    		<button @click="deleteItem()">{{language.confirm}}</button>
+	    	</div>
+	    </div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+//          	this.id = 2;//暫時寫死為2
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                id:"",
+                bgImg:"",
+                deletePop: false,
+                setPop:false,
+                type: 1,
+                qrcodeImg:""
+            },
+            methods:{  
+            	//導航點擊
+            	nav(type){
+            		if(type == 1){
+            			this.type = type;
+            			this.bgImg = this.item.frontImg;
+//          		this.bgImg = "./images/default_card_01.png"
+            		}else{
+            			this.type = type;
+            			this.bgImg = this.item.backImg;
+//          		this.bgImg = "./images/default_card_02.png"
+            		}
+            	},
+            	//獲取背景圖片
+            	getBgImg(){
+            		if(this.bgImg == '' || this.bgImg == null){
+	            		if(this.type == 1){
+	            			return "background-image: url('./images/default_card_01.png')";
+	            		} else{
+	            			return "background-image: url('./images/default_card_02.png')";
+	            		}
+            		}
+            		return "background-image: url('"+this.bgImg+"')";
+//	            			return "background-image: url('./images/default_card_01.png')";
+            		
+            	},
+            	//獲取詳情
+                getDetail(){
+                	let vm = this;
+                    const url = baseUrl + '/app/appAccount/getSelfCardView.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('selfCardId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                            vm.item = res.data.data;
+            				vm.bgImg = vm.item.frontImg;
+            				
+            				vm.qrcodeImg = vm.item.cardNumber;  
+                            vm.qrcode();
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                },
+                //刪除
+                deleteItem(){
+                	let vm = this;
+                    const url = baseUrl + '/app/appAccount/delSelfCard.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('selfCardId',vm.id);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	warmHint(language.successfully_deleted);
+                        	jumpTo('http://www.dzhyk.com/self-card.html')
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                },
+                qrcode () {
+                	JsBarcode("#qrcode", this.qrcodeImg);
+                	
+//              	$("#qrcode").JsBarcode(this.qrcodeImg);
+	                let that = this;
+	                let qrcode = new QRCode('qrcode', {
+	                    width: 124,
+	                    height: 80,        // 高度
+	                    text:  this.qrcodeImg,   // 二維碼內容
+	                    // render: 'canvas' ,   // 設置渲染方式（有兩種方式 table和canvas，默認是canvas）
+	                    // background: '#f0f',   // 背景色
+	                    // foreground: '#ff0'    // 前景色
+	                })
+	            }
+                
+            }
+        });
+    </script>
+</body>
+</html>

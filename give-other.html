@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" @click="jumpTo('http:www.dzhyk.com/coupon.html');">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- 赠送他人 -->
+	        <h2>{{language.give_others}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="give-top">
+	    	{{language.give_others}}
+	    </div>
+	    <div class="give-inps">
+	    	<div class="inp-item">
+	    		<div class="inp-item-t clearfix">
+		    		<span class="fl">{{language.the_person_being_called}}</span>
+		    		<span class="fr">
+		    			<input type="radio" name="sendtype" value="1" v-model="type" />
+		    		</span>
+	    		</div>
+	    		<div class="inp-item-b">
+	    			<span class="item-prefix" @click="areaBool = true;">+{{areaCode}}</span><input type="text" :placeholder="language.please_fill_in" v-model="phone" :disabled="type == 2" />
+	    		</div>
+	    	</div>
+	    	<div class="inp-item">
+	    		<div class="inp-item-t clearfix">
+		    		<span class="fl">{{language.gifted_mailbox}}</span>
+		    		<span class="fr">
+		    			<input type="radio" name="sendtype" value="2" v-model="type" />
+		    		</span>
+	    		</div>
+	    		<div class="inp-item-b">
+	    			<input type="text" :placeholder="language.please_fill_in" v-model="email" :disabled="type == 1" />
+	    		</div>
+	    	</div>
+	    </div>
+	    <div class="btns">
+	    	<button class="btn" @click="submitBool">{{language.confirm_give}}</button>
+	    </div>
+	    <div class="mask" v-if="popBool"></div>
+	    <div class="popup" v-if="popBool">
+	    	<div class="pop-con pop-con-thr">
+		    	{{language.you_have_successfully_sent_the_coupon_because_you_chose}}
+				{{language.non_registered_users_your_friends_register}}
+				<!--此APP後會收到您的優惠券<br /><br />-->
+	    	</div>
+	    	<div class="btns">
+	    		<button @click="cancle">{{language.cancel}}</button>
+	    		<button @click="jumpTo('http://www.dzhyk.com/coupon.html')" >{{language.confirm}}</button><!--跳到E3優惠-->
+	    	</div>
+	    </div>
+	    <div class="pop-all" v-if="areaBool">
+	    	<header class="topbar">
+		        <span class="fl" @click="cancle">
+		            <img src="images/head_ic_back.png">
+		        </span>
+		        <h2>{{language.select_region}}</h2>
+		        <span class="fr" @click="cancle">{{language.cancel}}</span>
+		    </header>
+	    	<div class="h88"></div>
+	        <div class="search-area-list">
+		    	<dl>
+		    		<dd v-for="item in items" @click="areaSel(item.id,item.phonePrev)">
+		    			{{item.name}}(+{{item.phonePrev}})
+		    		</dd>
+		    	</dl>
+		    </div>
+		</div>
+		<div class="mask" v-if="giveBool"></div>
+	    <div class="popup" v-if="giveBool">
+	    	<div class="pop-con">
+		    	{{language.are_you_sure_you_want_to_give_a_coupon}}<br />
+		    	{{couponContent}}
+	    	</div>
+	    	<div class="btns">
+	    		<button @click="cancle">{{language.cancel}}</button>
+	    		<button @click="submit">{{language.confirm}}</button>
+	    	</div>
+	    </div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+            	this.defaultArea();
+            	this.getArea();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                id:"",
+                popBool:false,
+                phone:"",
+                countryId:"",
+                type:1,
+                email:"",
+                areaBool:false,
+                couponContent:"",
+                giveBool:false,
+                areaCode:"",
+                items:[],
+                areaId:""
+            },
+            methods:{  
+              	//獲取默認的地區號
+            	defaultArea(){
+            		let vm = this;
+//                  const url = baseUrl + '/app/common/getMacaoDtoList.json';
+                    const url = baseUrl + '/app/common/getCountryIdByName.json';
+                    
+                    let formData = new FormData();
+                    formData.append('countryName',"澳门");
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	
+//                      	vm.areaCode = res.data.data.cityDto.phonePrev;
+//                      	vm.areaId = res.data.data.cityDto.id;
+                        	vm.areaCode = res.data.data.phonePrev;
+                        	vm.areaId = res.data.data.countryId;
+                        	
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+            	},
+            	//獲取號碼區列表
+            	getArea(){
+            		let vm = this;
+                    const url = baseUrl + '/app/common/getCountryList.json';
+                    let formData = new FormData();
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	console.log(res.data.data)
+                        	vm.items = res.data.data;
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+            	},
+            	//提交確認
+            	submitBool(){
+            		if(this.type == 1){
+            			if(this.phone.trim() == ""){
+            				warmHint(language.please_enter_the_callee_phone_number);
+            				return;
+            			}
+//						if(!checkPhone(this.phone.trim())){
+//							return;	
+//						}
+            			this.couponContent = "("+this.areaCode+")"+this.phone;
+            			this.giveBool = true;
+            		}else{
+            			if(this.email.trim() == ""){
+            				warmHint(language.please_enter_the_credited_person_email_address);
+            				return;
+            			}
+            			this.couponContent = this.email;
+            			this.giveBool = true;
+            		}
+            	},
+            	areaSel(id,areaCode){
+            		this.areaBool = false;
+            		this.areaId = id;
+            		this.areaCode = areaCode;
+            	},
+            	cancle(){
+            		this.giveBool = false;
+            		this.popBool = false;
+            		this.areaBool = false;
+            	},
+                submit(){
+                	let vm = this;
+                    const url = baseUrl + '/app/appAccount/giveAccountCouponToOther.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('accountCouponId',vm.id);
+                    if(vm.type == 1){
+                    	formData.append('phone',vm.phone);	
+                    	formData.append('countryId',vm.areaId);
+                    }else{
+                    	formData.append('email',vm.email);
+                    }
+                    formData.append('type',vm.type);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.code == 2000000) {
+                        	warmHint(language.already_given);
+                        	//不是該平臺的用戶
+                        	if(res.data.data.type == 0){
+                        		vm.giveBool = false;
+                        		vm.popBool = true;
+                        	}else{
+	                        	setTimeout(function(){
+	                          		jumpTo("http://www.dzhyk.com/friends.html");
+	                        	},2000);
+                        	}
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

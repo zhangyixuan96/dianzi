@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" onClick="javascript:history.go(-1)">
+	            <img src="images/head_ic_back.png">
+			</span>
+			<!-- E1-2会员卡说明 -->
+	        <h2>{{language.member_card_description}}</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="card-explain" v-if="!noGet">
+	    	<ul>
+	    		<li>
+	    			<div class="tit">{{language.current_level}}</div>
+	    			<div class="dec">{{item.levelName}}</div>
+	    		</li>
+	    		<li>
+	    			<div class="tit">{{language.level_privilege}}</div>
+	    			<div class="dec">{{item.levelPower}}</div>
+	    		</li>
+	    		<li>
+	    			<div class="tit">{{language.terms_of_use}}</div>
+	    			<!-- <div class="dec">{{item.content}}</div> -->
+	    			<!-- <div class="dec" v-html="item.content" style="white-space: pre-wrap;"></div> -->
+	    			<div class="dec" v-html="item.content"></div>
+	    		</li>
+	    		<li>
+	    			<div class="tit">{{language.renewal_condition}}</div>
+	    			<div class="dec">{{item.renewCondition}}</div>
+	    		</li>
+	    	</ul>
+	    </div>
+	    <div class="card-explain-time" v-if="!noGet">
+	    	<p>
+    			<span class="fl">{{language.get_date}}</span>
+    			<span class="fr">{{item.createTime}}</span>
+	    	</p>
+	    	<p>
+    			<span class="fl">{{language.expiration_date}}</span>
+    			<span class="fr">{{item.invalidTime}}</span>
+    		</p>
+	    </div>
+	    
+	    <div class="card-explain" v-if="noGet">
+	    	<ul>
+	    		<li>
+	    			<div class="tit">{{language.terms_of_use}}</div>
+	    			<!-- <div class="dec">{{item.content}}</div> -->
+	    			<!-- <div class="dec" v-html="item.content" style="white-space: pre-wrap;"></div> -->
+	    			<div class="dec" v-html="item.content"></div>
+	    		</li>
+	    		<li>
+	    			<div class="tit">{{language.renewal_condition}}</div>
+	    			<div class="dec">{{item.renewCondition}}</div>
+	    		</li>
+	    	</ul>
+	    </div>
+	    <div class="card-explain-time" v-if="noGet">
+	    	<p>
+    			<span class="fl">{{language.limited_period}}</span>
+    			<span class="fr">{{item.type}}</span>
+    		</p>
+	    </div>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            mounted(){
+            	if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined"){
+            		this.id = getUrlParam("id");
+                }
+            	if(getUrlParam("noget") != null && typeof(getUrlParam("noget")) != "undefined"){
+            		this.noGet = true;
+               }else{
+               		this.noGet = false;
+               }
+            	this.getDetail();
+            },
+            el:"#app",
+            data: { language:language,
+                item:{},
+                noGet:false,
+                id:""
+            },
+            methods:{
+                getDetail(){
+                	if(this.noGet){
+	                	let vm = this;
+	                    const url = baseUrl + '/app/appAccount/getMemberCardViewMoreDesc.json';
+	                    let formData = new FormData();
+	                    formData.append('sessionId',sessionId);
+	                    formData.append('shopId',vm.id);
+	                    axios.post(url, formData).then(res => {
+	                        if(!goLogin(res.data,window.location.href)){
+								return;	
+							}
+	                        if (res.data.code == 2000000) {
+	                            vm.item = res.data.data;                                  
+	                        } else {
+	                            warmHint(res.data.message);
+	                        }
+	                    });
+	                }else{
+	                	let vm = this;
+	                    const url = baseUrl + '/app/appAccount/getMemberCardDescription.json';
+	                    let formData = new FormData();
+	                    formData.append('sessionId',sessionId);
+	                    formData.append('memberCardId',vm.id);
+	                    axios.post(url, formData).then(res => {
+	                        if(!goLogin(res.data,window.location.href)){
+								return;	
+							}
+	                        if (res.data.code == 2000000) {
+	                            vm.item = res.data.data;                                  
+	                        } else {
+	                            warmHint(res.data.message);
+	                        }
+	                    });
+	                }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+    <script src="./js/global.js"></script>
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/axios.min.js"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+	    <header class="topbar">
+	        <span class="fl" onClick="javascript:history.go(-1)">
+	            <img src="images/head_ic_back.png">
+	        </span>
+	        <h2>“XXX” 商戶搜尋結果</h2>
+	    </header>  
+	    <div class="h88"></div>
+	    <div class="search-list">
+	    	<ul>
+	    		<li>
+	    			<img src="" alt="" class="item-avatar fl" />
+	    			<span class="fr">
+	    				<span class="item-t"><span class="item-name">格瑞斯美发工作室</span><span class="item-type">一级分类>二级分类</span></span>
+	    				<span class="item-m">
+	    					<dl>
+	    						<dd>满减</dd>
+	    						<dd>下单立减</dd>
+	    					</dl>
+	    				</span>
+	    				<span class="item-b">
+	    					<span class="item-address">地址：柏林路180号地下E口</span>
+	    					<span class="item-tel">电话：12548569541</span>
+	    				</span>
+	    				<span class="item-tags">
+	    					<dl>
+	    						<dd>实</dd>
+	    						<dd>推</dd>
+								<!--<dd v-if="item.recommenStatus == 1"><img src="./images/b1_ic_tui.png"/></dd>-->
+	    						
+	    					</dl>
+	    				</span>
+	    			</span>
+	    		</li>
+	    	</ul>
+	    </div>
+    </div>
+    <script type="text/javascript">
+        let vm = new Vue({
+            mounted(){
+            	
+            },
+            el:"#app",
+            data:{
+                items:[],
+                keyword:""
+            },
+            methods:{  
+            	cancle(){},
+                findWebsite(){
+                    const url = baseUrl + '/api/app/index/findWebsite.json';
+                    let formData = new FormData();
+                    formData.append('sessionId',sessionId);
+                    formData.append('longitude',vm.longitude);
+                    formData.append('latitude',vm.latitude);
+                    axios.post(url, formData).then(res => {
+                        if(!goLogin(res.data,window.location.href)){
+							return;	
+						}
+                        if (res.data.status == 2000000) {
+                            vm.items = res.data.data.TWebsiteResultList;                         
+                            for (let i = 0; i < res.data.data.TWebsiteResultList.length; i++) {
+                                var markercenter = new qq.maps.LatLng(res.data.data.TWebsiteResultList[i].latitude, res.data.data.TWebsiteResultList[i].longitude);//把所有网点渲染出来
+                            }                                     
+                        } else {
+                            warmHint(res.data.message);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

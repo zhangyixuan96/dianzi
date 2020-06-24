@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+		<script src="./js/global.js"></script>
+		<script src="./js/vue.min.js"></script>
+		<script src="./js/axios.min.js"></script>
+		<script src="./js/jquery-2.1.4.js"></script>
+		<link rel="stylesheet" href="./css/styles.css">
+		<style>
+			.showKong{
+				white-space: pre-line;
+			}
+			</style>
+	</head>
+
+	<body id="goScroll">
+		<div id="app" v-cloak>
+			<header class="topbar">
+				<span class="fl" @click="backLast()">
+		            <img src="images/head_ic_back.png">
+				</span>
+				<!-- C2-商户主页详情 -->
+				<h2>{{item.shopName}}</h2>
+			</header>
+			<div class="h88"></div>
+			<div class="loadMoudle" @touchstart="touchStart($event)" @touchmove="touchMove($event)" :style="{transform: 'translate3d(0,' + top + 'px, 0)'}" ref="scroll">
+				<div class="mer-detail">
+					<div class="mer-banner">
+						<div class="banner-in" :style="getBgImg(item.coverImg)"></div>
+						<!--<img :src="item.coverImg" alt="" />-->
+					</div>
+					<div class="mer-msg clearfix">
+						<div class="mer-logo fl">
+							<img :src="getLogo(item.logo)" />
+						</div>
+						<div class="fl mer-attr">
+							<img v-if="item.recommenStatus == 1" src="./images/b_ic_tui.png" class="icon-tui" />
+							 <!-- 认证标志 -->
+							<img v-if="item.authStatus==3" src="./images/icon_yirenzhen.png" alt="" class="icon-auth">
+							<img v-if="item.authStatus==2" src="./images/icon_wei_renzhen.png" alt="" class="icon-auth">
+							<div class="mer-name" style=" color: #FCAA50;font-size: 0.36rem;">{{item.shopName}}</div>
+							<div class="mer-sec">{{item.firstClassificationName}}>{{item.secondClassificationName}}</div>
+							<!-- <div class="mer-sec">{{language.address}}：{{item.shopAddress}}</div> -->
+							<!--<div class="mer-sec">{{language.shop_fixed_line_telephone}}：{{item.fixedPhone}}</div>-->
+							<!-- <div class="mer-tag" v-if="item.tagList.length != 0" @click="tagBool = true;"> -->
+							<div class="mer-tag" @click="tagBool = true;">{{language.store_features}}</div>
+							<!--<dl class="clearfix" v-if="item.tagList.length != 0">
+								<dd v-for="i in item.tagList">{{i}}</dd>
+							</dl>-->
+						</div>
+						<!--<div class="mer-tags">
+							<dl class="clearfix">-->
+								<!--<dd>{{getType(item.shopType)}}</dd>-->
+								<!--<dd v-if="item.recommenStatus == 1"><img src="./images/b_ic_tui.png" /></dd>-->
+								<!--<dd v-if="item.recommenStatus == 1">推</dd>-->
+							<!--</dl>
+						</div>-->
+					</div>
+				</div>
+				<div class="detail-nav">
+					<ul class="clearfix" style="display: flex;justify-content: space-between;">
+						<li @click="tel"><img src="images/c_ic_merchants_01.png" alt="" />{{language.phone}}</li>
+						<!-- <li @click="jumpTo('http://www.dzhyk.com/msg.html?accountId='+item.accountId)"><img src="images/c_ic_merchants_02.png" alt="" />{{language.message}}</li> -->
+						<li @click="join(item.id)" :style="item.memberStatus == 0&&item.joinStatus == 0?'color: #999':''"><img :src="joinIcon" alt="" />{{getMemberStatus(item.memberStatus)}}</li>
+						<li @click="attention"><img :src="followIcon" alt="" />{{getAttention(item.followStatus)}}</li>
+						<li @click="more"><img src="images/c_ic_merchants_03.png" alt="" />{{language.more}}</li>
+					</ul>
+				</div>
+				<!-- 新增地址和营业时间 -->
+				<div class="timeAdress">
+					<div class="one" @click="goSecond(item.businessHours)">
+					<!-- <div class="one"> -->
+						<img class="left" src="images/c2_icon_time.png" alt="">
+						<!-- <span> -->
+							<!-- <span class="running" v-if="onBussiness">{{language.inBussiness}}</span>
+							<span class="running2" v-else>{{language.resting}}</span>
+							<span class="circle" v-if="onBussiness"></span>{{item.businessHours}}
+							<span class="circle2" v-else></span>{{item.businessHours}} -->
+							<span class="limit">{{language.business_hours}}</span>
+						<!-- </span> -->
+						<img class="right" src="images/a2_1_ic_07.png" alt="">
+					</div>
+					<div class="one">
+						<img class="left" src="images/c2_icon_point.png" alt="">{{item.shopAddress}}
+						<!-- <img class="right2" src="images/a2_1_ic_07.png" alt=""> -->
+					</div>
+				</div>
+				<div class="mer-msg-list" ref="merList" id="merList">
+					<nav>
+						<ul class="clearfix">
+							<li :class="{cur:type==1}" @click="nav(1)">{{language.powder_circle}}</li>
+							<li :class="{cur:type==2}" @click="nav(2)">{{language.offer}}</li>
+						</ul>
+					</nav>
+					<!-- 粉圈 -->
+					<div class="circle-list" v-if="circleBool">
+						<ul>
+							<li v-for="(c,index) in citems" @click="jumpTo('http://www.dzhyk.com/circle-detail.html?id='+c.id)">
+								<span class="item-t clearfix">
+		    				<img :src="c.headPhoto" alt="" class="item-avatar fl" />
+		    				<span class="fl item-msg">
+		    					<span class="item-name">{{c.userName}}</span>
+								<span class="item-time">{{getTime(c.createTime.time)}}{{language.before}}</span>
+								<!-- <span class="item-content" v-html="c.content"> -->
+								<span class="item-content showKong" v-html="c.showContent">
+								</span>
+								<div style="color:rgb(227, 165, 98);margin-top: 0.1rem;"  v-if="c.lostWord" @click="showAllWord($event,index)">全文</div>
+								<!-- <span class="item-content"> -->
+								<!-- {{c.content}} -->
+		    					
+								</span>
+								</span>
+								<span class="item-imgs" v-if="c.imgList.length != 0">
+		    				<dl class="clearfix">
+		    					<dd v-for="i in c.imgList"><img :src="i" @click="openImg($event,i)"/></dd>
+		    				</dl>
+		    			</span>
+								<span class="item-operate">
+		    				<dl class="clearfix">
+		    					
+		    					<dd>
+		    						<img :src="c.likeStatus == 0?'images/search_ic_share.png':'images/bi_ic_share.png'" alt="" />{{c.likeNum}}
+		    					</dd>	
+		    					<dd>
+		    						<img src="images/search_ic_comments.png" alt="" />{{c.commentNum}}
+		    					</dd>    
+		    					<dd>
+		    						<img src="images/bi_ic_live.png" alt="" />{{c.shareNum}}
+		    					</dd>					
+		    				</dl>
+		    			</span>
+							</li>
+						</ul>
+
+						<div class="page-status" v-if="noneData">
+							<img src="images/empty_box.png" />{{language.empty_no_no}}
+						</div>
+					</div>
+					<!-- 优惠卷 -->
+					<div class="mer-discounts-list" v-if="couponBool">
+						<ul>
+							<!--<li v-for="c in couitems">
+								{{c.integral}}
+							</li>-->
+							<!-- <li :class="getCouCla(c.getStatus,c.surplusNum,c.invalidTime)" v-for="c in couitems" @click="getCoupon(c.getStatus,c.type,c.id,c.integral,c.name,c.accountCouponId,c.surplusNum)"> -->
+							<li :class="getCouCla(c.getStatus,c.surplusNum,c.invalidTime)" v-for="c in couitems" @click="goCouponDetail(c.getStatus,c.accountCouponId)">
+								<span class="fl fl-cover"><img :src="getCouponImg(c.img)"/></span>
+								<span class="fr">
+			    			<span class="item-name"><i v-if="c.type == 2">【{{c.integral}}{{language.integral}}】</i>{{c.name}}</span>
+								<span class="item-num">{{language.remaining_number_of_sheets}}：{{c.surplusNum}}/{{c.allNum}}</span>
+								<span class="item-dec">{{c.useExplain}}&nbsp;</span>
+								<span class="item-time">{{language.effective_period}}：{{c.effectTime}}-{{c.invalidTime}}</span>
+								</span>
+								<button class="btn clearfix" @click.stop="getCoupon(c.getStatus,c.type,c.id,c.integral,c.name,c.accountCouponId,c.surplusNum)">{{getCouTxt(c.getStatus,c.type,c.surplusNum,c.invalidTime)}}</button>
+							</li>
+						</ul>
+
+						<div class="page-status" v-if="counoneData">
+							<img src="images/empty_box.png" />{{language.empty_no_no}}
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="mask" v-if="interBool||telBool || moreBool||tagBool" @click="cancle"></div>
+			<div class="popup-tag" v-if="tagBool">
+				<div class="popup-tag-in">
+					<div class="popup-tag-in-in">
+						<img src="images/a2_ic_guan.png" class="icon-close" @click="cancle"/>
+						<dl class="clearfix">
+							<dd v-for="i in item.tagList">{{i}}</dd>
+						</dl>
+					</div>
+				</div>
+			</div>
+							
+			<div class="popup" v-if="interBool">
+				<div class="pop-con">
+					{{language.whether_to_confirm_the_use}}<span class="num">{{integral}}{{language.integral}}</span>{{language.exchange}}<br /> {{couname}}
+				</div>
+				<!--@click="top(item.c)"-->
+				<div class="btns">
+					<button @click="cancle">{{language.cancel}}</button>
+					<button @click="confirm">{{language.confirm}}</button>
+				</div>
+			</div>
+			
+			<div class="popup" v-if="interBool">
+				<div class="pop-con">
+					{{language.whether_to_confirm_the_use}}<span class="num">{{integral}}{{language.integral}}</span>{{language.exchange}}<br /> {{couname}}
+				</div>
+				<!--@click="top(item.c)"-->
+				<div class="btns">
+					<button @click="cancle">{{language.cancel}}</button>
+					<button @click="confirm">{{language.confirm}}</button>
+				</div>
+			</div>
+			<div class="popup" v-if="telBool">
+				<div class="pop-con" v-if="item.phone">
+					{{language.whether_to_confirm_the_call}}<br /> {{item.phone}}
+				</div>
+				<!-- 商户还没设定电话 -->
+				<div class="pop-con" v-else>
+					{{language.noPhone}}
+				</div>
+				<div class="btns">
+					<button @click="cancle">{{language.cancel}}</button>
+					<!--<button><a :href="getTel()">確認</a></button>-->
+					<button @click="jumpTo('http://www.dzhyk.com/tel.html?phone='+item.phone)" v-if="item.phone">{{language.confirm}}</button>
+					<button @click="cancle" v-else>{{language.confirm}}</button>
+				</div>
+			</div>
+			<div class="poupon-list" v-if="moreBool">
+				<ul>
+					<li @click="jumpTo('merchant-msg.html?id='+item.id+'&userName='+item.userName)">{{language.business_information}}</li>
+					<li @click="jumpTo('http://www.dzhyk.com/friends.html')">{{language.invite_friends}}</li>
+				</ul>
+			</div>
+		</div>
+		<script type="text/javascript">
+		$(function(){
+			// window.scrollTo(100,500);
+			// document.documentElement.scrollTop = document.body.scrollTop = 500;
+			// $('body').scrollTop(500);
+				// $(window).scroll(function(){
+					
+				// 	var height = $(window).scrollTop();
+				// 	console.log(height);
+				
+				// })
+			})
+			new Vue({
+				mounted() {
+					if(getUrlParam("discounts") != null && typeof(getUrlParam("discounts")) != "undefined") {
+						this.type = 2;
+						this.circleBool = false;
+						this.couponBool = true;
+					}
+					if(getUrlParam("index") != null && typeof(getUrlParam("index")) != "undefined") {
+						this.isIndex = true;
+					}
+					if(getUrlParam("recommend") != null && typeof(getUrlParam("recommend")) != "undefined") {
+						this.isRecommend = true;
+					}
+					if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined") {
+						this.id = getUrlParam("id");
+					}
+					if(getUrlParam("userType") != null && typeof(getUrlParam("userType")) != "undefined") {
+						this.userType = getUrlParam("userType");
+					}
+					if(getUrlParam("firstId") != null && typeof(getUrlParam("firstId")) != "undefined") {
+						this.firstId = getUrlParam("firstId");
+					}
+					if(getUrlParam("secondId") != null && typeof(getUrlParam("secondId")) != "undefined") {
+						this.secondId = getUrlParam("secondId");
+					}
+					if(getUrlParam("scrollIt") != null && typeof(getUrlParam("scrollIt")) != "undefined") {
+						this.scrollIt = true;
+						this.scrollToLocation();
+					}
+					// this.id = 193;//寫死
+					this.getDetail();
+					// this.scrollToCoupon();
+					 window.addEventListener("scroll",this.handleScroll);
+					
+				},
+				el: "#app",
+				data: { 
+					// 从优惠卷详情回来跳到原地
+					scrollIt:false,
+					// 是否滚动
+					scroll:true,
+					// 推荐商户进入
+					firstId:'',
+					secondId:'',
+					// 营业状态
+					onBussiness:false,
+					language:language,
+					userType:3,
+					tagBool:false,
+					joinIcon: "images/c_ic_merchants_04.png",
+					followIcon: "images/c_ic_merchants_05.png",
+					item: {},
+					id: "",
+					circleBool: true,
+					couponBool: false,
+					telBool: false,
+					interBool: false,
+					citems: [],
+					couitems: [],
+
+					type: 1,
+					integral: 0,
+					couname: "",
+					couponId: "",
+					moreBool: false,
+					isIndex: false,
+					isRecommend: false,
+
+					//下拉加載
+					noneData: false,
+					cpageNumber: 1,
+					cpageSize: 20,
+					pageSize: 20,
+					pageNumber: 1,
+					totalNum: 0,
+					top: 0,
+					startY: 0,
+					pullUpState: 0, // 1:上拉加載更多, 2:加載中……, 3:我是有底線的
+					isLoading: false, // 是否正在加載
+
+					coupageNumber: 1,
+					coupageSize: 20,
+					counoneData: false,
+					loading:false,
+					times:0,
+				},
+				methods: {
+					// 从优惠卷详情回来跳到原来的位置
+					scrollToLocation(){
+						// console.log("inscrollToLocationscrollToLocationin");
+						setTimeout(()=>{
+							this.$nextTick(()=>{
+								let scrollTop =  sessionStorage.getItem("commentScrollTop");
+								window.scrollTo(0, scrollTop);
+								document.documentElement.scrollTop = document.body.scrollTop = scrollTop;
+							})
+						},500)
+						
+					},
+					// 从首页最新优惠进来跳到最新优惠栏目
+					scrollToCoupon(){
+						this.times = this.times +1;
+						// alert("times",this.times);
+						if(this.times>3){
+							return;
+						}
+						// console.log("in");
+						let scrollTop = $("#merList").offset().top-50;
+						this.$nextTick(()=>{
+							window.scrollTo(0, scrollTop);
+							document.documentElement.scrollTop = document.body.scrollTop = scrollTop;
+						})
+						// $('#loadMoudle').scrollTop(scrollTop);
+						// this.$nextTick(() => {
+						// 	document.querySelector(".loadMoudle").scrollTop = scrollTop;
+						// 	console.log("document.querySelector().scrollTop",document.querySelector(".loadMoudle").scrollTop);
+							
+						// });
+						// alert("scrollTop",scrollTop)
+						// console.log("scrollTop1",scrollTop);
+						// let scrollTop = this.$refs.merList.scrollTop;
+						// console.log("scrollTop",this.$refs.merList,scrollTop,scrollTop1);
+						// alert("1",document.documentElement.scrollTop)
+						// alert("2",document.body.scrollTop)
+						
+						// console.log("scrollToCouponscrollToCouponscrollToCoupon");
+					// 	const vm = this;
+					// 	window.addEventListener("load", function() {
+					// 		console.log("in");
+					//       vm.offset = 650;
+					//       setTimeout(() => {
+					// 		// $('#app').scrollTop(vm.offset)
+					//         document.documentElement.scrollTop = document.body.scrollTop = vm.offset;
+					//       }, 200);
+					//     });
+					},
+					getCouponImg(coverImg){
+						if(coverImg == "" || coverImg == null){
+							return "./images/default_coupons.png"
+						}
+						return coverImg
+					},
+					getBgImg(coverImg){
+						if(coverImg == "" || coverImg == null){
+							return "backgroundImage: url('./images/k_pi_2@2x.png')"
+						}
+						return "backgroundImage: url('" + coverImg + "')";
+					},
+					getLogo(logo){
+						if(logo == "" || logo == null){
+							return "./images/k_pi_2@2x.png"
+						}
+						return logo;
+					},
+					
+					//下拉加載
+					touchStart(e) {
+						this.startY = e.targetTouches[0].pageY
+					},
+					touchMove(e) {
+						if(e.targetTouches[0].pageY < this.startY) { // 上拉
+							this.judgeScrollBarToTheEnd()
+						}
+					},
+
+					// 判斷滾動條是否到底
+					judgeScrollBarToTheEnd() {
+						let innerHeight = document.querySelector('.loadMoudle').clientHeight
+						// 變量scrollTop是滾動條滾動時，距離頂部的距離
+						let scrollTop = document.documentElement.scrollTop || window.pageYOffset ||
+
+							document.body.scrollTop
+						// 變量scrollHeight是滾動條的總高度
+						let scrollHeight = document.documentElement.clientHeight || document.body.scrollHeight
+						// 滾動條到底部的條件
+						if(scrollTop + scrollHeight >= innerHeight) {
+							if(this.type == 1) {
+								if(this.pullUpState !== 3 && !this.isLoading && !this.noneData) {
+									this.pullUpState = 1;
+									this.infiniteLoad();
+									this.cpageNumber++;
+									this.circleList();
+								}
+
+							} else {
+								if(this.pullUpState !== 3 && !this.isLoading && !this.counoneData) {
+									this.pullUpState = 1;
+									this.infiniteLoad();
+									//									console.log(this.ccoupageNumber)
+									this.coupageNumber++;
+									//									console.log(ccoupageNumber)
+									this.couponList();
+								}
+							}
+						}
+					},
+					infiniteLoad() {
+						this.pullUpState = 2;
+						this.isLoading = true;
+						setTimeout(() => {
+							this.infiniteLoadDone();
+						}, 800)
+					},
+					infiniteLoadDone() {
+						this.pullUpState = 0;
+						this.isLoading = false
+					},
+
+					backLast() {
+						if(this.isIndex) {
+							jumpTo('http://www.dzhyk.com');
+						} else if(this.isRecommend) {
+							// history.go(-1);
+							jumpTo("classify-recommend.html?firstId="+ this.firstId+"&secondId="+this.secondId);
+						} else {
+							jumpTo('http://www.dzhyk.com/merchant.html');
+						}
+					},
+					more() {
+						this.moreBool = true;
+					},
+					getAttention(status) {
+						if(status == 0) {
+							return language.attention;
+						} else if(status == 1) {
+							return language.unsubscribe;
+						}
+					},
+					//商家也可以关注商家
+					attention() {
+//						if(this.userType == 2){
+//							warmHint(language.user_only);
+//							return;
+//						}
+						if(this.item.followStatus == 0) {
+							let vm = this;
+							const url = baseUrl + '/app/fansCircle/followAccount.json';
+							let formData = new FormData();
+							formData.append('sessionId', sessionId);
+							formData.append('accountId', vm.item.accountId);
+							formData.append('status', 1);
+							axios.post(url, formData).then(res => {
+								if(!goLogin(res.data, window.location.href)) {
+									return;
+								}
+								if(res.data.code == 2000000) {
+									warmHint(language.has_been_concerned);
+									vm.followIcon = "images/c_ic_merchants_05_s.png";
+									vm.item.followStatus = 1;
+								} else {
+									warmHint(res.data.message);
+								}
+							});
+						} else if(this.item.followStatus == 1) {
+							let vm = this;
+							const url = baseUrl + '/app/fansCircle/followAccount.json';
+							let formData = new FormData();
+							formData.append('sessionId', sessionId);
+							formData.append('accountId', vm.item.accountId);
+							formData.append('status', 0);
+							axios.post(url, formData).then(res => {
+								if(!goLogin(res.data, window.location.href)) {
+									return;
+								}
+								if(res.data.code == 2000000) {
+									warmHint(language.unfollowed);
+									vm.followIcon = "images/c_ic_merchants_05.png";
+									vm.item.followStatus = 0;
+								} else {
+									warmHint(res.data.message);
+								}
+							});
+						}
+					},
+					tel() {
+						this.telBool = !this.telBool;
+					},
+					getTel() {
+						return "tel:" + this.item.fixedPhone;
+					},
+					join() {										
+						if(this.userType == 2){
+							warmHint(language.user_only);
+							return;
+						}
+						let vm = this;
+						if(this.loading){return;}else{
+							this.loading = true;
+						}
+						if(this.item.memberStatus == 0) {
+							if(this.item.joinStatus == 0) {
+								warmHint(language.has_not_opened_the_membership_card);
+								return;
+							}
+							if(this.item.submitApplyStatus == 1){
+								warmHint(language.be_verifing);
+								setTimeout(function(){
+									vm.loading = false;
+								},2000);
+								return;
+							}
+							jumpTo("card-detail.html?id=" + this.item.id+"&shopName="+this.item.shopName);
+						} else {
+							jumpTo("card.html?id=" + this.item.memberCardId+"&merchantIndex=true"+"&indexId="+this.id);
+						}
+					},
+					getMemberStatus(status) {
+						if(status == 1) {
+							this.joinIcon = "images/c_ic_merchants_04_s.png"
+							return language.membership_card;
+						} else {
+							this.joinIcon = "images/c_ic_merchants_04.png"
+							return language.join_member;
+						}
+					},
+					confirm() {
+						let vm = this;
+						const url = baseUrl + '/app/appAccount/receiveCoupon.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('couponId', vm.couponId);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								console.log("res",res.data);
+								warmHint(language.successful_redemption);
+								setTimeout(function() {
+									// jumpTo('coupon-more.html?id=' + vm.couponId+"&page=mindex&indexId="+vm.id);
+									jumpTo('coupon-more.html?id=' + res.data.data.accountCouponId+"&page=mindex&indexId="+vm.id);
+								}, 2000)
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					},
+					// 跳转优惠券详情
+					goCouponDetail(status,accountCouponId){
+						//0未領取
+						if(status == 0) {
+						} else {
+							jumpTo('coupon-more.html?id=' + accountCouponId+"&page=mindex&indexId="+this.id);
+						}
+					},
+					getCoupon(status, type, id, integral, name, accountCouponId,num) {
+						// 剩余数量
+						if(num == 0){
+							warmHint(language.have_finished);
+							return;
+						}
+						//0未領取
+						if(status == 0) {
+							//type=1普通優惠券
+							if(type == 1) {
+								let vm = this;
+								const url = baseUrl + '/app/appAccount/receiveCoupon.json';
+								let formData = new FormData();
+								formData.append('sessionId', sessionId);
+								formData.append('couponId', id);
+								axios.post(url, formData).then(res => {
+									if(!goLogin(res.data, window.location.href)) {
+										return;
+									}
+									if(res.data.code == 2000000) {
+										warmHint(language.successfully_received);
+										// console.log("res.data.data",res.data.data);
+										setTimeout(function() {	
+											jumpTo('coupon-more.html?id=' + res.data.data.accountCouponId+"&page=mindex&indexId="+vm.id);
+										}, 2000)
+									} else {
+										warmHint(res.data.message);
+									}
+								});
+							} else {
+								//type=2積分優惠券
+								if(this.item.memberStatus == 1) {
+									this.interBool = !this.interBool;
+									this.integral = integral;
+									this.couname = name;
+									this.couponId = id;
+								} else {
+									warmHint(language.members_can_receive);
+								}
+							}
+						} else {
+							jumpTo('coupon-more.html?id=' + accountCouponId+"&page=mindex&indexId="+this.id);
+						}
+					},
+					getCouTxt(status, type, num,invalidTime) {
+						let now = new Date(new Date().getFullYear(),(new Date().getMonth()),new Date().getDate(),0,0,0);
+						//未領取
+						if(status == 0) {
+							//是否已領完
+							if(num == 0) {
+								return language.have_finished;
+							}else{
+								//是否已過期
+								if(new Date(invalidTime).getTime()<new Date(now).getTime()){
+									return language.expired;
+								}
+								if(type == 2) {
+									return language.redeem_now;
+								} else{
+									return language.get_it_right_now;
+								}
+							}
+						} else if(status == 1) {
+							return language.received;
+						}
+					},
+					getCouCla(status, num,invalidTime) {
+						
+						let now = new Date(new Date().getFullYear(),(new Date().getMonth()),new Date().getDate(),0,0,0);
+						//未領取
+						if(status == 0) {
+							//是否已領完
+							if(num == 0) {
+								return "item-finished";
+							}else{
+								//是否已過期
+								if(new Date(invalidTime).getTime()<new Date(now).getTime()){
+									return "item-past";
+								}
+								return "item-new";
+							}
+						} else if(status == 1) {
+							return "item-get";
+						}
+						
+//						if(num == 0) {
+//							return "item-past";
+//						}
+//						if(status == 0) {
+//							return "item-new";
+//						} else if(status == 1) {
+//							return "item-get";
+//						} else {
+//							return "item-past";
+//						}
+					},
+					nav(type) {
+						if(type == 1) {
+							this.type = 1;
+							this.couponBool = false;
+							this.circleBool = true;
+							this.cpageNumber = 1;
+							this.citems = [];
+							this.circleList();
+						} else {
+							this.type = 2;
+							this.circleBool = false;
+							this.couponBool = true;
+							this.coupageNumber = 1;
+							this.couitems = [];
+							this.couponList();
+						}
+					},
+					getTime(timeStr) {
+						if(timeStr == "") {
+							return "";
+						}
+						let timeInterval = parseInt(new Date().getTime()) - parseInt(new Date(timeStr).getTime());
+						if(parseInt(timeInterval / 1000) < 60) {
+							return "1"+language.minute;
+						} else if(parseInt(timeInterval / 1000 / 60) < 60) {
+							return parseInt(timeInterval / 1000 / 60) + language.minute;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60) < 24) {
+							return parseInt(timeInterval / 1000 / 60 / 60) + language.hour;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24) < 30) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24) + language.days;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30) < 12) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30) + language.month;
+						} else if(parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30 / 12) >= 1 ) {
+							return parseInt(timeInterval / 1000 / 60 / 60 / 24 / 30 / 12) + language.year;
+						} else {
+							return timeStr;
+						}
+					},
+//					getType(type) {
+//						if(type == 1) {
+//							return "實";
+//						} else if(type == 2) {
+//							return "網";
+//						}
+//					},
+					getDetail() {
+						let vm = this;
+						const url = baseUrl + '/app/fansCircle/getShopHomeViewMsg.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('shopId', vm.id);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								// 判断是否是在营业时间内
+								let data = res.data.data;
+								let hours = data.businessHours;
+								let timeArr = [];
+								if(hours.indexOf("~")!=-1){
+									hours = hours.split("~");
+								}else{
+									hours = hours.split("-");	
+								}
+								hours.map(item=>{
+									let data = item.split(":");
+									timeArr.push(Number(data[0]));
+									timeArr.push(Number(data[1]));
+									
+								})
+								let date = new Date();
+								let curHour = date.getHours();
+								let curMinute = date.getMinutes();
+								// console.log("date",curHour,curMinute);
+								if(curHour>=timeArr[0]&&curMinute>=timeArr[1]&&curHour<timeArr[2]){
+									vm.onBussiness = true;
+								}
+								if(curHour>=timeArr[0]&&curMinute>=timeArr[1]&&curHour==timeArr[2]&&curMinute<=timeArr[3]){
+									vm.onBussiness = true;
+								}
+								// console.log("timeArr",timeArr);
+								vm.item = data;
+								vm.circleList();
+								vm.couponList();
+								if(vm.couponBool&&vm.isIndex&&!vm.scrollIt){
+								// setTimeout(()=>{
+									vm.$nextTick(()=>{
+										vm.scrollToCoupon();
+									})
+								// },100)
+								}
+								
+								
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					},
+					// 显示全文
+					showAllWord(e,c){
+						e.stopPropagation();
+						this.citems[c].lostWord = false;
+						this.citems[c].showContent = this.citems[c].content;
+					},
+					circleList() {
+						let vm = this;
+						const url = baseUrl + '/app/fansCircle/getFansCircleByAccountId.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('accountId', vm.item.accountId);
+						formData.append('pageNumber', vm.cpageNumber);
+						formData.append('pageSize', vm.cpageSize);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								let data = res.data.data;
+								// let nowData = Object.create(data);
+								// let test;
+								// console.log("nowData1",nowData);
+								data.map((item,index)=>{
+									let content = item.content;
+									console.log("content.length",content.length);
+									
+									if(content.length>140){
+										item.lostWord = true;
+										item.showContent = item.content.slice(0,141);
+									}else{
+										item.showContent = content;
+									}
+
+									// item.content = item.content.replace(/↵/g,"\n");
+								})
+								console.log("data",data);
+								// console.log("nowData2",nowData)
+								vm.citems = vm.citems.concat(data);
+								if(vm.cpageNumber == 1 && res.data.data.length == 0) {
+									vm.noneData = true;
+								} else {
+									vm.noneData = false;
+								}
+								if(vm.couponBool&&vm.isIndex&&!vm.scrollIt){
+								// setTimeout(()=>{
+									vm.$nextTick(()=>{
+										vm.scrollToCoupon();
+									})
+								// },100)
+								}
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					},
+					couponList() {
+						let vm = this;
+						const url = baseUrl + '/app/fansCircle/getAppCouponDtoByShopId.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('shopId', vm.id);
+						formData.append('pageNumber', vm.coupageNumber);
+						formData.append('pageSize', vm.coupageSize);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								// console.log(vm.couitems)
+								vm.couitems = vm.couitems.concat(res.data.data);
+
+								// console.log(vm.couitems)
+								if(vm.coupageNumber == 1 && res.data.data.length == 0) {
+									vm.counoneData = true;
+								} else {
+									vm.counoneData = false;
+								}
+								if(vm.couponBool&&vm.isIndex&&!vm.scrollIt){
+								// setTimeout(()=>{
+									vm.$nextTick(()=>{
+										vm.scrollToCoupon();
+									})
+								// },100)
+								}
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					},
+					cancle() {
+						this.tagBool = false;
+						this.telBool = false;
+						this.interBool = false;
+						this.moreBool = false;
+					},
+					// 跳转二级详情
+					goSecond(content){
+						jumpTo("merchant-msg-second.html?content="+content);
+					},
+					handleScroll() {
+				      const vm = this;
+				      //获取垂直方向上，滚动条距离顶部的偏移量
+				      let scrollTop =
+				        window.pageXOffset ||
+				        document.documentElement.scrollTop ||
+				        document.body.scrollTop;
+						// console.log("scrollTop",scrollTop);
+				      if (scrollTop != 0) {
+				        sessionStorage.setItem("commentScrollTop",scrollTop); //存值（key,value）
+				      }
+				   },
+				// 粉圈放大图片
+					openImg(e,url){
+						e.stopPropagation();
+						// console.log("url",url);
+						var u = navigator.userAgent;
+						var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
+						if(isAndroid){
+							window.open.open(url);
+						}else{
+							window.webkit.messageHandlers.open.postMessage(url)
+						}
+						
+					}
+				}
+			});
+		</script>
+	</body>
+
+</html>

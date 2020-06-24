@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title></title>
+		<script src="./js/global.js"></script>
+		<script src="./js/vue.min.js"></script>
+		<script src="./js/axios.min.js"></script>
+		<link rel="stylesheet" href="./css/styles.css">
+	</head>
+
+	<body style="background-color: rgba(249,247,246,1);">
+		<div id="app" v-cloak>
+			<header class="topbar">
+				<span class="fl" @click="backLast()">
+	            <img src="images/head_ic_back.png">
+			</span>
+				<!-- 优惠券更多信息 -->
+				<h2>{{language.coupon_details}}</h2>
+			</header>
+			<div class="h88"></div>
+			<div class="coupon-more-top">
+				<img :src="getBgImg(item.img)" />
+				<div class="item-status">{{getStatus(item.status)}}</div>
+			</div>
+			<div class="coupon-more-list">
+				<ul>
+					<!--<li v-if="noGet">
+						<span class="fl">{{language.types_of}}：</span>
+						<span class="fr bg-color">{{getType(item.type)}}</span>
+					</li>-->
+					<li v-if="item.type == 2">
+						<span class="fl">{{language.required_points}}：</span>
+						<span class="fr bg-color">{{item.integral}}{{language.integral}}</span>
+					</li>
+					<li>
+						<span class="fl">{{language.coupon_title}}：</span>
+						<span class="fr">{{item.name}}</span>
+					</li>
+					<!--<li v-if="noGet">
+						<span class="fl">{{language.user}}：</span>
+						<span class="fr">{{getUser(item.usePerson)}}</span>
+					</li>-->
+					<!-- 优惠描述 -->
+					<li @click="goSecond('offer_description',item.useExplain)">
+						<span class="fl">{{language.offer_description}}：</span>
+						<!-- <span class="fr">{{item.useExplain}}</span> -->
+						<span class="fr haveSecond" ><img src="images/pop_ic_jump2.png" alt=""></span>
+					</li>
+					<!--<li>
+						<span class="fl">{{language.offers_way}}：</span>
+						<span class="fr">{{item.couponContent}}</span>
+					</li>-->
+					<li>
+						<span class="fl">{{language.effective_period}}：</span>
+						<span class="fr">{{item.effectTime}}~{{item.invalidTime}}</span>
+					</li>
+					<!--<li v-if="noGet">
+						<span class="fl">{{language.remaining_number_of_sheets}}：</span>
+						<span class="fr">{{item.surplusNum}}/{{item.allNum}}</span>
+					</li>
+					<li v-if="noGet">
+						<span class="fl">{{language.minimum_consumption}}：</span>
+						<span class="fr">{{item.minCost}}</span>
+					</li>-->
+					<li>
+						<span class="fl">{{language.applicable_shop}}：</span>
+						<span class="fr">{{item.useShop}}</span>
+					</li>
+					<!-- 使用说明 -->
+					<li @click="goSecond('instructions_for_use',item.useDescribe)">
+						<span class="fl">{{language.instructions_for_use}}：</span>
+						<!-- <span class="fr">{{item.useDescribe}}</span> -->
+						<span class="fr haveSecond" ><img src="images/pop_ic_jump2.png" alt=""></span>
+					</li>
+				</ul>
+			</div>
+			<!-- <div class="h168"></div> -->
+			<div class="coupon-more-btns noMargin" >
+				<button  v-if="item.status==1" @click="use">{{language.use_immediately}}</button>
+				<!-- <button  @click="jumpTo('give-other.html?id='+id)">{{language.give_others}}</button> -->
+				<!-- <button v-if="item.status == 1" @click="use">{{language.use_immediately}}</button> -->
+				<button v-if="item.canGive == 1 &&(item.status == 1 || item.status == 2)" @click="jumpTo('give-other.html?id='+id)">{{language.give_others}}</button>
+			</div>
+		</div>
+		<script type="text/javascript">
+			new Vue({
+				mounted() {
+					if(getUrlParam("id") != null && typeof(getUrlParam("id")) != "undefined") {
+						this.id = getUrlParam("id");
+					}
+					if(getUrlParam("indexId") != null && typeof(getUrlParam("indexId")) != "undefined") {
+						this.indexId = getUrlParam("indexId");
+					}
+					         	// this.id = "CP386044XTQUGP18P-308";
+					         	// this.id = "302";
+					this.getDetail();
+				},
+				el: "#app",
+				data: {
+					// 商户ID
+					indexId:'',
+					language: language,
+					item: {},
+					id: "",
+					noGet:false
+				},
+				methods: {
+					use() {
+
+						let now = new Date(new Date().getFullYear(), (new Date().getMonth()), new Date().getDate(), 0, 0, 0);
+						//						this.txt = new Date(this.item.effectTime).getTime() +"==="+new Date(now).getTime()+"==="+new Date(this.item.invalidTime).getTime()
+						//						this.bool = new Date(this.item.effectTime).getTime()<=new Date(now).getTime() && new Date(this.item.invalidTime).getTime()>=new Date(now).getTime()
+						//						this.bool1 = new Date(this.item.effectTime).getTime()>new Date(now).getTime();
+						//						this.bool2 = new Date(this.item.invalidTime).getTime()<new Date(now).getTime();
+						////						new Date(this.item.effectTime).getTime()>new Date(now).getTime()
+						//						return;
+						if(new Date(this.item.effectTime).getTime() <= new Date(now).getTime() && new Date(this.item.invalidTime).getTime() >= new Date(now).getTime()) {
+							jumpTo('coupon-code.html?id=' + this.id+"&indexId="+this.indexId)
+						} else if(new Date(this.item.effectTime).getTime() > new Date(now).getTime()) {
+							warmHint(language.not_ready_yet);
+						} else if(new Date(this.item.invalidTime).getTime() < new Date(now).getTime()) {
+							warmHint(language.run_out_time);
+						}
+					},
+					getBgImg(img) {
+						if(img == "" || img == null) {
+							return "./images/default_coupons.png";
+						}
+						return img;
+					},
+					backLast() {
+						if(getUrlParam("appType") != null && typeof(getUrlParam("appType")) != "undefined") {
+							jumpTo('http://www.dzhyk.com/coupon.html')
+						} else {
+							if(getUrlParam("page") != null && typeof(getUrlParam("page")) != "undefined") {
+								if(getUrlParam("page") == "card") {
+									jumpTo('card.html?id=' + getUrlParam("cardId"))
+								} else if(getUrlParam("page") == "mindex") {
+									jumpTo('merchant-index.html?id=' + getUrlParam("indexId")+"&discounts=2&scrollIt=true")
+									// history.go(-1)
+								}
+							}
+						}
+					},
+
+					//1-所有人 2-關註的人 3-會員
+					getUser(type) {
+						if(type == 1) {
+							return language.everyone;
+						} else if(type == 2) {
+							return language.followig;
+						} else {
+							return language.member;
+						}
+					},
+					getType(type) {
+						if(type == 1) {
+							return language.ordinary_coupon;
+						} else {
+							return language.point_coupon;
+						}
+					},
+					getStatus(status) {
+						switch(status) {
+							case 1:
+								return language.effective;
+								break;
+							case 2:
+								return language.not_active;
+								break;
+							case 3:
+								return language.expired;
+								break;
+							case 4:
+								return language.used;
+								break;
+							default:
+								return language.effective;
+								break;
+						}
+					},
+					getDetail() {
+						let vm = this;
+						const url = baseUrl + '/app/appAccount/getAccountCouponView.json';
+						let formData = new FormData();
+						formData.append('sessionId', sessionId);
+						formData.append('accountCouponId', vm.id);
+						axios.post(url, formData).then(res => {
+							if(!goLogin(res.data, window.location.href)) {
+								return;
+							}
+							if(res.data.code == 2000000) {
+								vm.item = res.data.data;
+								// vm.item.status = 2;
+//								status未领
+								
+//								vm.noGet = res.data.data.status == 1?true:false;
+							} else {
+								warmHint(res.data.message);
+							}
+						});
+					},
+					// 跳转二级页面
+					goSecond(title,content){
+						let toContent = JSON.stringify(content);
+						jumpTo('coupon-more-second.html?title=' + title+"&content="+toContent);
+					}
+				}
+			});
+		</script>
+	</body>
+
+</html>
